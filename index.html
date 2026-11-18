@@ -254,6 +254,20 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .cal-meals{display:grid;gap:6px;margin-top:8px}
 .menu{grid-template-columns:repeat(5,minmax(0,1fr))}
 .menu a{font-size:12px;word-break:keep-all}
+
+/* 요정 루미 */
+.fairy-line{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);background:var(--panel);border:2px solid #0f0e1f;box-shadow:inset 0 0 0 2px var(--line),3px 3px 0 #0f0e1f;border-radius:4px;padding:6px 10px;font-size:13px;line-height:1.35;min-width:0}
+.fairy-cv{width:32px;height:32px;image-rendering:pixelated;flex:none}
+#fairyLine{display:flex;gap:8px;align-items:center;min-width:0}
+#fairyLine span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fairy-grade{font-family:var(--font-pixel);font-size:11px;padding:3px 5px;border:2px solid #0f0e1f;border-radius:2px;flex:none;color:#2b2850}
+.fairy-grade.big{font-size:16px;padding:6px 9px;margin-left:auto}
+.gS{background:var(--mint)}.gA{background:#9fe0ff}.gB{background:var(--gold)}.gC{background:var(--red)}
+.fairy-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fairy-head .fairy-cv{width:44px;height:44px}
+.fairy-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.fairy-list li{display:grid;grid-template-columns:auto 1fr;gap:6px;font-size:14px;line-height:1.45;padding:7px 9px;background:var(--panel-2);border-radius:2px}
+@media (min-width:720px){#s-home>.fairy-line{grid-column:2}#s-home .stage{grid-row:2/span 4}}
 </style>
 </head>
 <body>
@@ -292,6 +306,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <div class="bubble"><span id="hCostume">기본 복장</span><span id="hReason"></span></div>
     <canvas width="48" height="56" data-hero="home" aria-label="포리 캐릭터"></canvas>
   </div>
+  <a class="fairy-line" href="#today" aria-label="요정 루미의 평가 보기"><canvas width="16" height="16" class="fairy-cv" aria-hidden="true"></canvas><span id="fairyLine"></span></a>
   <p class="notice" id="pendingNote" hidden></p>
   <nav class="menu" aria-label="메뉴">
     <a class="main" href="#record"><span class="i">✏️</span><span>기록하기<br><span class="s">식단 · 운동 · 인바디 · 컨디션</span></span></a>
@@ -449,6 +464,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <!-- ===== 오늘의 연료 ===== -->
 <section class="screen" id="s-today" aria-label="오늘의 연료">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>오늘의 연료</h1><span class="tag" id="todayTag"></span></div>
+  <div class="box" id="fairyBox"></div>
   <div class="box">
     <div class="bar-row"><div class="lbl"><span>칼로리</span><span class="num" id="kcalText"></span></div>
       <div class="bar"><i id="kcalBar" style="--c:var(--mint);width:0"></i></div></div>
@@ -674,7 +690,7 @@ function compute(D){
 /* ---------- render ---------- */
 function rebuild(){
   M=compute(merged());
-  renderHome();renderStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderQuestRules();
+  renderHome();renderStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());renderQuestRules();
   weightChart(M.ib,M.S);kcalChart(M.days,M.T,M.S);exChart(M.weeks.slice(-8),M.S);
   drawAll();
   if(lastLevel!==null&&M.L>lastLevel){$("lvUpText").textContent="LV."+M.L+" "+M.title+"(이)가 되었어요!";$("lvUp").classList.add("on");$("lvUpOk").focus()}
@@ -846,6 +862,76 @@ function calInfoFactory(M,opt){
     return{ex:exS,diet,rest,html:h}}
 }
 
+/* ===== 칼로리 요정 루미: 식단·운동 평가 ===== */
+function drawFairy(c,f){const x=c.getContext("2d");x.clearRect(0,0,16,16);const P=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(a,b,w,h)};
+  const dy=f?0:1;
+  // 날개
+  const wg="#bfe6ff",wg2="#8fd0ff";if(f){P(1,3+dy,4,5,wg);P(11,3+dy,4,5,wg);P(2,4+dy,2,3,wg2);P(12,4+dy,2,3,wg2)}else{P(2,5+dy,3,4,wg);P(11,5+dy,3,4,wg);P(2,6+dy,2,2,wg2);P(12,6+dy,2,2,wg2)}
+  // 머리·몸
+  P(6,1+dy,4,1,"#ffd166");P(5,2+dy,6,4,"#ffe0c7");P(5,2+dy,6,1,"#ffd166");P(6,4+dy,1,1,"#2b2133");P(9,4+dy,1,1,"#2b2133");P(7,5+dy,2,1,"#ff86bd");
+  P(6,6+dy,4,5,"#ff86bd");P(5,9+dy,6,2,"#ff86bd");P(6,11+dy,1,2,"#ffe0c7");P(9,11+dy,1,2,"#ffe0c7");
+  // 지팡이 별
+  P(12,7+dy,1,5,"#c9a26b");P(11,5+dy,3,1,"#ffd166");P(12,4+dy,1,3,"#ffd166");if(f)P(14,3,1,1,"#fff");else P(10,3,1,1,"#fff")}
+function fairyAdvice(X){
+  // X: {T, now, goal, na, mode:"max"|"min"|"near", kOk(k), days:{iso:{kcal,na,items:[{meal,kcal}],pending}}, weights:[{d,w}], week:{hit,days}, dir}
+  const out=[],add=(lv,t)=>out.push({lv,t});const g=X.goal,f=n=>Math.round(n).toLocaleString("ko-KR");
+  const tIso=iso(X.T),td=X.days[tIso],tk=td?td.kcal:0,hr=X.now.getHours();
+  const past=[...Array(7)].map((_,i)=>iso(addD(X.T,-(i+1)))).filter(d=>X.days[d]&&!X.days[d].pending);
+  // 오늘
+  if(X.mode==="max"){if(tk>g*1.2)add("red",`오늘 벌써 목표보다 ${f(tk-g)}kcal 넘었어요. 남은 끼니는 채소·단백질로 가볍게 가요!`);else if(tk>g*1.02)add("yel",`오늘 목표보다 ${f(tk-g)}kcal 조금 넘었어요. 저녁은 가볍게!`)}
+  else if(X.mode==="min"){if(hr>=19&&tk<g*0.8)add("yel",`오늘 아직 ${f(g-tk)}kcal 더 먹어야 해요. 우유·견과류·바나나 같은 간식 어때요?`)}
+  else{if(tk>g*1.15)add("yel",`오늘 목표보다 ${f(tk-g)}kcal 많아요. 남은 끼니는 조금 덜어 먹어요.`);else if(hr>=20&&tk<g*0.8)add("yel",`오늘 ${f(g-tk)}kcal 덜 먹었어요. 너무 굶으면 근육이 빠져요.`)}
+  // 최근 7일
+  if(past.length>=2){
+    const ks=past.map(d=>X.days[d].kcal),avg=ks.reduce((a,b)=>a+b,0)/ks.length;
+    const bad=past.filter(d=>!X.kOk(X.days[d].kcal));
+    const low=past.filter(d=>X.days[d].kcal<Math.max(g*0.6,800)&&X.days[d].items.length>=2);
+    if(X.mode!=="min"&&low.length)add("yel",`최근 ${low.slice().sort().map(d=>md(parse(d))).join("·")}은 ${f(Math.min(...low.map(d=>X.days[d].kcal)))}kcal까지 너무 적게 먹었어요. 기록을 빠뜨린 게 아니라면, 굶은 다음 날 폭식이 오기 쉬워요.`);
+    let run=0,best=0;past.slice().reverse().forEach(d=>{const k=X.days[d].kcal;const off=X.mode==="min"?k<g*0.98:k>g*(X.mode==="max"?1.02:1.1);run=off?run+1:0;best=Math.max(best,run)});
+    if(best>=3)add("red",`${X.mode==="min"?"덜 먹은":"넘친"} 날이 ${best}일 연속이에요. 한 끼만 바꿔도 흐름이 돌아와요!`);
+    else if(bad.length>=3)add("yel",`최근 ${past.length}일 중 ${bad.length}일이 목표를 벗어났어요. 평균 ${f(avg)}kcal (목표 ${f(g)}).`);
+    else if(bad.length)add("info",`최근 ${past.length}일 중 ${bad.slice().sort().map(d=>md(parse(d))).join("·")}만 목표를 벗어났어요. 평균 ${f(avg)}kcal, 나머지는 잘 지켰어요!`);
+    else if(!bad.length)add("good",`최근 ${past.length}일 모두 칼로리 목표를 지켰어요. 평균 ${f(avg)}kcal, 아주 좋아요!`);
+    const naOver=past.filter(d=>X.days[d].na>X.na);
+    if(naOver.length>=3)add("yel",`최근 ${naOver.length}일 나트륨이 ${f(X.na)}mg를 넘었어요. 국물·소스·가공식품을 조금 줄여 봐요. 붓기도 줄어요.`);
+    let all=0,snack=0;past.forEach(d=>X.days[d].items.forEach(i=>{all+=i.kcal||0;if(i.meal==="간식")snack+=i.kcal||0}));
+    if(all&&snack/all>0.3)add("yel",`최근 칼로리의 ${Math.round(snack/all*100)}%가 간식이에요. 간식을 끼니로 옮기면 배가 더 든든해요.`);
+  }
+  if(td&&td.na>X.na*1.5)add("yel",`오늘 나트륨 ${f(td.na)}mg로 많아요. 물을 충분히 마셔요!`);
+  const logged=Object.keys(X.days).filter(d=>d<=tIso).sort();const lastLog=logged[logged.length-1];
+  if(!lastLog)add("yel","아직 식단 기록이 없어요. 한 끼부터 적어 볼까요?");
+  else if((X.T-parse(lastLog))/864e5>=2)add("yel",`${md(parse(lastLog))} 이후 식단 기록이 없어요. 깜빡했나요?`);
+  // 주간 운동
+  if(X.week){const di=(X.T.getDay()+6)%7,left=7-di,need=X.week.days-X.week.hit;
+    if(need<=0)add("good",`이번 주 운동 퀘스트 달성! (${X.week.hit}/${X.week.days}회)`);
+    else if(need>left)add("red",`이번 주 운동 퀘스트는 남은 ${left}일로는 어려워요 (${X.week.hit}/${X.week.days}회). 다음 주에 다시 도전해요!`);
+    else if(need===left)add("yel",`이번 주 퀘스트까지 남은 ${left}일 매일 운동해야 해요!`);
+    else if(di>=3&&need>=2)add("yel",`이번 주 운동 ${need}회 남았어요. 이번 주 안에 꼭!`);
+    else add("info",`이번 주 운동 ${need}회 더 하면 퀘스트 달성! (${X.week.hit}/${X.week.days}회)`)}
+  // 체중 변화 속도
+  const ws=X.weights.slice().sort((a,b)=>a.d-b.d);
+  if(ws.length>=2){const b=ws[ws.length-1];let a=null;for(let i=ws.length-2;i>=0;i--){if((b.d-ws[i].d)/864e5>=5){a=ws[i];break}}
+    if(a){const wk=(b.w-a.w)/((b.d-a.d)/864e5/7);
+      if(X.dir<0&&wk<-1.2)add("yel",`일주일에 ${Math.abs(wk).toFixed(1)}kg씩 빠지고 있어요. 너무 빠르면 근육도 같이 빠져요. 조금 더 먹어도 괜찮아요.`);
+      else if(X.dir<0&&wk>0.5)add("yel",`요즘 체중이 일주일에 ${wk.toFixed(1)}kg씩 올랐어요. 간식·야식을 한번 점검해 봐요.`);
+      else if(X.dir>0&&wk>0.7)add("yel",`일주일에 ${wk.toFixed(1)}kg씩 늘고 있어요. 너무 빠르면 지방이 같이 붙어요. 조금 천천히!`);
+      else if(X.dir>0&&wk<-0.3)add("yel","체중이 줄고 있어요. 증량하려면 조금 더 먹어야 해요!");
+      else if(X.dir<0&&wk<=-0.2)add("good",`일주일에 ${Math.abs(wk).toFixed(1)}kg씩, 건강한 속도로 빠지고 있어요!`)}}
+  const red=out.filter(o=>o.lv==="red").length,yel=out.filter(o=>o.lv==="yel").length;
+  const score=100-25*red-10*yel;const grade=score>=95?"S":score>=80?"A":score>=60?"B":"C";
+  if(!red&&!yel&&!out.some(o=>o.lv==="good"))add("good","오늘도 잘하고 있어요. 이대로만 가요!");
+  const ORD={red:0,yel:1,info:2,good:3};out.sort((a,b)=>ORD[a.lv]-ORD[b.lv]);
+  return{grade,msgs:out}}
+function renderFairy(X){const r=fairyAdvice(X);const ico={red:"🔴",yel:"🟡",info:"🔵",good:"🟢"};
+  const top=r.msgs[0];const say={S:"완벽해요!",A:"잘하고 있어요!",B:"조금만 신경 써요!",C:"요정이 걱정하고 있어요…"}[r.grade];
+  if($("fairyLine"))$("fairyLine").innerHTML=`<b class="fairy-grade g${r.grade}">${r.grade}</b><span>${top?esc(top.t):say}</span>`;
+  if($("fairyBox"))$("fairyBox").innerHTML=`<div class="fairy-head"><canvas width="16" height="16" class="fairy-cv" aria-hidden="true"></canvas><div><b>요정 루미의 평가</b><br><span class="small muted">${say}</span></div><b class="fairy-grade big g${r.grade}">${r.grade}</b></div>
+    <ul class="fairy-list">${r.msgs.map(m=>`<li class="${m.lv}"><span>${ico[m.lv]}</span><span>${esc(m.t)}</span></li>`).join("")}</ul>`;
+  document.querySelectorAll(".fairy-cv").forEach(c=>drawFairy(c,0))}
+
+function fairyX(){const S=M.S;const days={};Object.entries(M.days).forEach(([d,v])=>days[d]={kcal:v.kcal,na:v.na,pending:v.pending>0,items:v.items.map(i=>({meal:i.meal,kcal:i.k}))});
+  const tw=M.weeks.find(w=>w.current);
+  return{T:M.T,now:new Date(),goal:S.kcalGoal,na:S.naGoal,mode:"max",kOk:k=>k<=M.tol,days,weights:M.ib.map(x=>({d:x.d,w:x.w})),week:{hit:tw?tw.hit:0,days:S.quest.days},dir:-1}}
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
 function entPickState(){const all=[...document.querySelectorAll("#entries .pick")],on=all.filter(c=>c.checked);
@@ -1161,6 +1247,7 @@ function initQuick(o){
 
 /* ---------- animation ---------- */
 function drawAll(){
+  document.querySelectorAll(".fairy-cv").forEach(c=>drawFairy(c,frame));
   if(!M)return;
   document.querySelectorAll("canvas[data-hero]").forEach(c=>{
     const k=c.dataset.kind||(c.dataset.hero==="title"||c.dataset.hero==="lvup"?"default":(dressOverride||M.auto));
