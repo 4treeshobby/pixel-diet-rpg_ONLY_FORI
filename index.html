@@ -241,7 +241,7 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .cd.sel{background:var(--gold);color:#2b2850}
 .cd.rest{box-shadow:inset 0 -4px 0 var(--pink)}
 .cd.future{opacity:.45}
-.dots{display:flex;gap:3px}
+.dots{display:flex;gap:3px;justify-content:center;min-height:10px}
 .dots i,.cdot{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid transparent;box-sizing:border-box}
 .cdot{vertical-align:-1px}
 .dots i.ex.hit,.cdot.ex.hit{background:var(--mint);border-color:var(--mint)}
@@ -822,7 +822,7 @@ function renderCalendar(info){
     if(r.ex==="hit")exN++;if(r.diet==="ok")dietN++;
     const future=ds>tIso;
     cells+=`<button type="button" class="cd ${ds===tIso?"today":""} ${ds===CAL.sel?"sel":""} ${r.rest?"rest":""} ${future?"future":""}" data-d="${ds}" aria-label="${CAL.m+1}월 ${d}일${r.ex==="hit"?", 운동 완료":""}${r.diet==="ok"?", 식단 완료":""}">
-      <span class="n num">${d}</span><span class="dots"><i class="ex ${r.ex||""}"></i><i class="dt ${r.diet||""}"></i></span></button>`}
+      <span class="n num">${d}</span><span class="dots">${r.ex?`<i class="ex ${r.ex}"></i>`:""}${r.diet?`<i class="dt ${r.diet}"></i>`:""}</span></button>`}
   $("calGrid").innerHTML=cells;
   $("calSum").innerHTML=`이번 달 운동 완료 <b class="num up">${exN}일</b> · 식단 완료 <b class="num" style="color:var(--gold)">${dietN}일</b>`;
   const sd=CAL.sel&&CAL.sel.slice(0,7)===`${CAL.y}-${String(CAL.m+1).padStart(2,"0")}`?CAL.sel:null;
