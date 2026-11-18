@@ -837,10 +837,10 @@ function calInfoFactory(M,opt){
   // opt: {kcalGoal, minFor(iso)->minutes, mealItems(day)->[{meal,name,kcal,pend}], exItems(ex)->[{name,min}]}
   return ds=>{const d=M.days[ds],e=M.ex[ds],rest=M.inRest(parse(ds));const need=opt.minFor(ds);
     const exS=e?(e.min>=need?"hit":"part"):null;
-    let diet=null;if(d){diet=d.pending?"pend":d.kcal<=M.tol?"ok":"over"}
+    let diet=null;if(d){diet=d.pending?"pend":(M.kOk?M.kOk(d.kcal):d.kcal<=M.tol)?"ok":"over"}
     let h=`<h3 style="font-size:16px;margin:0 0 6px">${mdw(parse(ds))}${rest?' <span class="pill" style="background:var(--pink);color:#2b2850">회복</span>':""}</h3>`;
     h+=`<p class="small" style="margin:0 0 4px"><span class="cdot ex ${exS||""}"></span> 운동 ${e?`<b class="num">${e.min}분</b> · `+opt.exItems(e).map(i=>esc(i.name)+(i.min?` ${i.min}분`:"")).join(", "):'<span class="muted">기록 없음</span>'}${exS==="hit"?' <span class="up">완료</span>':exS==="part"?` <span class="muted">(${need}분 이상이면 완료)</span>`:""}</p>`;
-    h+=`<p class="small" style="margin:0"><span class="cdot dt ${diet||""}"></span> 식단 ${d?`<b class="num">${fmt(d.kcal)}kcal</b> / ${fmt(opt.kcalGoal)}`+(diet==="ok"?' <span class="up">완료</span>':diet==="over"?' <span class="down">초과</span>':' <span class="muted">계산 대기 있음</span>'):'<span class="muted">기록 없음</span>'}</p>`;
+    h+=`<p class="small" style="margin:0"><span class="cdot dt ${diet||""}"></span> 식단 ${d?`<b class="num">${fmt(d.kcal)}kcal</b> / ${fmt(opt.kcalGoal)}`+(diet==="ok"?' <span class="up">완료</span>':diet==="over"?` <span class="down">${M.kOk&&d.kcal<opt.kcalGoal?"부족":"초과"}</span>`:' <span class="muted">계산 대기 있음</span>'):'<span class="muted">기록 없음</span>'}</p>`;
     if(d){const items=opt.mealItems(d);h+='<div class="cal-meals">'+["아침","점심","저녁","간식"].filter(m=>items.some(i=>i.meal===m)).map(m=>{const its=items.filter(i=>i.meal===m);
       return`<div class="meal-row"><b>${m}</b><span>${its.map(i=>esc(i.name)).join(", ")}</span><span class="num">${fmt(its.reduce((a,i)=>a+(i.kcal||0),0))}</span></div>`}).join("")+'</div>'}
     return{ex:exS,diet,rest,html:h}}
