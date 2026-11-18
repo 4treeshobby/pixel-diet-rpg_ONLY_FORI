@@ -21,6 +21,7 @@
   --red:#ff6b7f;
   --line:#4a4580;
   --stage:#f6ead2;
+  --well:#141329;
   --font-pixel:"Press Start 2P", ui-monospace, monospace;
   --font-body:"Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color-scheme:dark;
@@ -50,7 +51,7 @@ button,input,select{font-family:var(--font-body);font-size:16px}
 .back{background:var(--panel-2);color:var(--ink);border:3px solid #0f0e1f;box-shadow:3px 3px 0 #0f0e1f;padding:6px 12px;border-radius:2px;cursor:pointer}
 .back:active,.btn:active,.menu a:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #0f0e1f}
 
-.bar{height:16px;background:#141329;border:2px solid #0f0e1f;position:relative;border-radius:2px;overflow:hidden}
+.bar{height:16px;background:var(--well);border:2px solid #0f0e1f;position:relative;border-radius:2px;overflow:hidden}
 .bar>i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--c,var(--gold)) 0 8px,color-mix(in srgb,var(--c,var(--gold)) 80%,#000) 8px 10px)}
 .bar-row{display:grid;gap:4px;margin-top:6px}
 .bar-row .lbl{display:flex;justify-content:space-between;gap:8px;font-size:14px}
@@ -90,9 +91,9 @@ form{display:grid;gap:10px}
 .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 label{display:grid;gap:4px;font-size:14px;color:var(--ink-dim)}
-input,select{background:#141329;color:var(--ink);border:2px solid var(--line);border-radius:2px;padding:9px 10px;width:100%;min-width:0}
+input,select{background:var(--well);color:var(--ink);border:2px solid var(--line);border-radius:2px;padding:9px 10px;width:100%;min-width:0}
 input:focus,select:focus{border-color:var(--gold);outline:none}
-.preview{background:#141329;border:2px solid #0f0e1f;padding:10px;border-radius:2px;font-size:15px}
+.preview{background:var(--well);border:2px solid #0f0e1f;padding:10px;border-radius:2px;font-size:15px}
 .btn{font-family:var(--font-body);font-size:17px;background:var(--mint);color:#1c1a33;border:3px solid #0f0e1f;box-shadow:4px 4px 0 #0f0e1f;padding:10px 14px;cursor:pointer;border-radius:2px}
 .btn.alt{background:var(--panel-2);color:var(--ink)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -162,7 +163,7 @@ footer{font-size:13px;color:var(--ink-dim);text-align:center}
 @media (max-width:420px){.menu{grid-template-columns:repeat(2,minmax(0,1fr))}.row3{grid-template-columns:1fr 1fr}.node .nm{font-size:10px}.node .kg{font-size:7px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-.quick textarea{background:#141329;color:var(--ink);border:2px solid var(--line);border-radius:2px;padding:10px;width:100%;font:inherit;font-size:15px;min-height:96px;resize:vertical}
+.quick textarea{background:var(--well);color:var(--ink);border:2px solid var(--line);border-radius:2px;padding:10px;width:100%;font:inherit;font-size:15px;min-height:96px;resize:vertical}
 .quick textarea:focus{border-color:var(--gold);outline:none}
 .qbtns{display:flex;gap:8px;flex-wrap:wrap}
 .qrow{background:var(--panel-2);border:2px solid #0f0e1f;border-radius:2px;padding:10px;display:grid;gap:8px}
@@ -172,13 +173,25 @@ footer{font-size:13px;color:var(--ink-dim);text-align:center}
 .qgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px}
 .qgrid2{display:grid;grid-template-columns:2fr 1fr;gap:6px}
 .qgrid input[readonly]{opacity:.7}
-#qReview{display:grid;gap:8px}
+#qReview,#wqReview{display:grid;gap:8px}
+[hidden]{display:none!important}
 .qsave{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:sticky;bottom:8px;background:var(--panel);border:3px solid #0f0e1f;padding:10px;border-radius:4px}
 @media (max-width:420px){.qgrid{grid-template-columns:1fr 1fr}.qgrid label:first-child{grid-column:1/-1}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* 밝은 테마: 낮의 픽셀 마을 */
+html[data-theme="light"]{--night:#f7eedd;--panel:#fffaf0;--panel-2:#f1e4cc;--ink:#2b2850;--ink-dim:#6d6690;--line:#dcc9a6;--well:#ffffff;
+  --pink:#ff6fae;--gold:#e9a514;--mint:#2fb487;--red:#e0485e;color-scheme:light}
+html[data-theme="light"] .tag{color:#fff}
+.theme-btn{position:fixed;bottom:12px;right:12px;z-index:8;background:var(--panel-2);color:var(--ink);border:3px solid #0f0e1f;box-shadow:3px 3px 0 #0f0e1f;border-radius:2px;padding:6px 10px;font-family:var(--font-body);font-size:14px;cursor:pointer}
+.theme-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #0f0e1f}
 </style>
 </head>
 <body>
+<button class="theme-btn" id="themeBtn" type="button" aria-label="화면 테마 바꾸기">☀️ 밝게</button>
+<script>(function(){var K="dietrpg.theme",t="dark";try{t=localStorage.getItem(K)||"dark"}catch(e){}
+function set(v){document.documentElement.setAttribute("data-theme",v);var b=document.getElementById("themeBtn");if(b)b.textContent=v==="light"?"🌙 어둡게":"☀️ 밝게";try{localStorage.setItem(K,v)}catch(e){}}
+set(t);document.getElementById("themeBtn").addEventListener("click",function(){set(document.documentElement.getAttribute("data-theme")==="light"?"dark":"light")})})();</script>
 
 <!-- ===== 타이틀 ===== -->
 <section class="screen" id="s-title" aria-label="게임 시작 화면">
@@ -271,7 +284,18 @@ footer{font-size:13px;color:var(--ink-dim);text-align:center}
     </form>
   </div>
 
+  <div class="box quick" data-panel="workout" hidden>
+    <h2>⚡ 빠른 입력 <span class="tag">BETA</span></h2>
+    <p class="small muted" style="margin:0 0 8px">한 운동을 그대로 적거나 붙여넣으세요. 시간·세트·무게·횟수·경사/속도를 알아서 나눠요.</p>
+    <label for="wqText" class="sr">한 운동</label>
+    <textarea id="wqText" placeholder="1118 (수) : 트레드밀 30분 경사12 속도5, 레그프레스 40kg 12회 3세트&#10;어제 : 폴댄스 1시간, 천국의계단 20분 레벨5"></textarea>
+    <div class="qbtns" style="margin-top:8px"><button class="btn" type="button" id="wqParse">🔍 알아듣기</button><button class="btn alt" type="button" id="wqClear">지우기</button></div>
+    <p class="small muted" style="margin:8px 0 0">날짜를 안 쓴 줄은 아래 '하나씩 입력'의 날짜로 들어가요. '오늘·어제'도 알아들어요.</p>
+  </div>
+  <div id="wqReview" data-panel="workout" hidden></div>
+  <div class="qsave" id="wqSaveRow" hidden data-panel="workout"><span id="wqSum"></span><button class="btn" type="button" id="wqSave">✔ 모두 기록하기</button></div>
   <div class="box" data-panel="workout" hidden>
+    <h2>하나씩 입력</h2>
     <form id="fWork">
       <div class="row">
         <label for="wDate">날짜<input type="date" id="wDate" required></label>
@@ -649,7 +673,7 @@ function initForms(){
   ["mName","mQty","mKcal1","mNa1","mPending"].forEach(id=>$(id).addEventListener("input",updatePreview));
   document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
-    document.querySelectorAll("[data-panel]").forEach(p=>{if(p.id==="qSaveRow"){p.style.display=b.dataset.tab==="meal"?"":"none";return}p.hidden=p.dataset.panel!==b.dataset.tab})}));
+    document.querySelectorAll("[data-panel]").forEach(p=>{if(p.classList.contains("qsave")){p.style.display=b.dataset.tab===p.dataset.panel?"":"none";return}p.hidden=p.dataset.panel!==b.dataset.tab})}));
   $("wName").addEventListener("input",()=>{const n=$("wName").value;$("wCat").value=/헬스|근력|덤벨|머신|컬|프레스|풀|덕션|익스텐션|로우|킥백/.test(n)?"근력":/폴댄스|검도/.test(n)?"기타":"유산소"});
   $("fMeal").addEventListener("submit",async e=>{e.preventDefault();if(!col)return;
     const name=$("mName").value.trim(),q=parseFloat($("mQty").value);if(!name||!(q>0)){toast("음식 이름과 양을 넣어 주세요");return}
@@ -681,6 +705,9 @@ function initForms(){
   $("lvUpOk").addEventListener("click",()=>$("lvUp").classList.remove("on"));
   setFormsEnabled(false);
   let sampleFn=null;(async()=>{try{for(let i=0;i<30&&!(window.claude&&window.claude.use);i++)await new Promise(r=>setTimeout(r,100));sampleFn=window.claude&&window.claude.use?await window.claude.use("sample"):null}catch(e){sampleFn=null}if(!sampleFn&&$("qAsk"))$("qAsk").remove()})();
+  initQuickW({toast,defDate:()=>$("wDate").value,parseDate:QUICK.parseDate,minGoal:()=>{try{return M.S.quest.minMinutes}catch(e){return 30}},
+    save:async rows=>{if(!col){toast("저장소에 연결된 뒤 다시 눌러 주세요");return false}
+      for(const r of rows){const ok=await save({type:"workout",date:r.date,cat:r.cat,name:r.name,min:r.min,sets:r.sets,weight:r.weight,reps:r.reps,setting:r.setting});if(!ok)return false}return true}});
   initQuick({foods:()=>foodMap,toast,allowPending:true,defDate:()=>$("mDate").value,defMeal:()=>$("mMeal").value,
     save:async rows=>{if(!col){toast("저장소에 연결된 뒤 다시 눌러 주세요");return false}
       for(const r of rows){const name=r.key||r.name;const pend=r.status==="pending";
@@ -716,6 +743,71 @@ async function connectDb(){
       $("dbNote").hidden=true;setFormsEnabled(true);rebuild()},
       err=>{clearTimeout(timer);$("dbNote").hidden=false;$("dbNote").textContent=err&&err.code==="revoked"?"이 화면의 저장 권한이 사라졌어요.":"저장소 연결이 끊겼어요. 페이지를 다시 열어 주세요.";setFormsEnabled(false)});
   }catch(e){clearTimeout(timer);$("dbNote").textContent="저장소에 연결하지 못했어요."}
+}
+
+/* ===== 운동 빠른 입력 ===== */
+const QUICKW=(function(){
+  const CARDIO=/트레드밀|런닝|러닝|걷기|조깅|사이클|자전거|스피닝|계단|줄넘기|수영|등산|에어로빅|줌바|일립티컬|로잉|하이킹|산책/;
+  const OTHER=/검도|폴|요가|필라테스|발레|복싱|태권도|주짓수|클라이밍|댄스|스트레칭|골프|테니스|배드민턴|축구|농구/;
+  function relDate(s){const t=new Date();t.setHours(0,0,0,0);const off=/그제|그저께/.test(s)?-2:/어제/.test(s)?-1:/오늘/.test(s)?0:null;if(off===null)return null;t.setDate(t.getDate()+off);return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")}
+  function item(p){
+    let s=" "+p.replace(/[()（）]/g," ")+" ";const o={min:null,sets:null,weight:null,reps:null,setting:[]};let m;
+    const take=re=>{const r=s.match(re);if(r)s=s.replace(r[0]," ");return r};
+    if(m=take(/(\d+(?:\.\d+)?)\s*시간\s*(?:(\d+)\s*분)?/))o.min=Math.round(+m[1]*60+(m[2]?+m[2]:0));
+    else if(m=take(/(\d+)\s*(?:분|min)/i))o.min=+m[1];
+    if(m=take(/(\d+)\s*(?:회|rep|reps|번)?\s*[x×*]\s*(\d+)\s*(?:세트|set)?/i)){o.reps=+m[1];o.sets=+m[2]}
+    if(m=take(/(\d+)\s*(?:세트|set|sets)/i))o.sets=+m[1];
+    if(m=take(/(\d+(?:\.\d+)?)\s*(kg|킬로|lb|단)/i))o.weight=m[1]+(m[2]==="킬로"?"kg":m[2]);
+    if(m=take(/(\d+)\s*(?:회|개|rep|reps|번)/i))o.reps=+m[1];
+    while(m=take(/(경사|속도|시속|레벨|강도|lv\.?)\s*(\d+(?:\.\d+)?)/i))o.setting.push(m[1].replace(/lv\.?/i,"레벨")+" "+m[2]);
+    while(m=take(/(\d+(?:\.\d+)?)\s*(km|㎞|층|칼로리|kcal)/i))o.setting.push(m[1]+m[2]);
+    const name=s.replace(/\s+/g," ").trim().replace(/^[-·•]\s*/,"");
+    o.setting=o.setting.join(" · ")||null;
+    o.name=name;o.cat=CARDIO.test(name)?"유산소":OTHER.test(name)?"기타":(o.sets||o.reps||o.weight)?"근력":o.min?"유산소":"근력";
+    return o}
+  function parse(text,defDate,parseDate){
+    const rows=[];let cDate=defDate;
+    text.split(/\n+/).map(l=>l.trim()).filter(Boolean).forEach(line=>{
+      let body=line;const ci=line.search(/[:：]/);
+      const head=ci>=0?line.slice(0,ci):line.slice(0,16);
+      const d=relDate(head)||parseDate(head);
+      if(d){cDate=d;body=ci>=0?line.slice(ci+1):line.replace(/^\s*(\d{1,2}\s*[\/\.월]\s*\d{1,2}\s*일?|\d{4}|오늘|어제|그제|그저께)\s*(\([^)]*\))?\s*(운동)?\s*/,"")}
+      else if(ci>=0&&/운동/.test(head))body=line.slice(ci+1);
+      const parts=[];let depth=0,cur="";for(const ch of body){if(ch==="("||ch==="（")depth++;if(ch===")"||ch==="）")depth=Math.max(0,depth-1);if((ch===","||ch==="，"||ch==="/")&&depth===0){parts.push(cur);cur=""}else cur+=ch}parts.push(cur);
+      parts.map(p=>p.trim()).filter(Boolean).forEach(p=>{const o=item(p);if(!o.name)return;rows.push(Object.assign({date:cDate,raw:p,use:true},o))})});
+    return rows}
+  return {parse,relDate};
+})();
+
+function initQuickW(o){
+  // o: {save:async rows=>bool, toast, defDate:()=>str, parseDate:fn, minGoal:()=>num}
+  const $=id=>document.getElementById(id);let rows=[];
+  const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const v=x=>x==null?"":x;
+  function render(){const box=$("wqReview");
+    if(!rows.length){box.innerHTML="";$("wqSaveRow").hidden=true;return}
+    box.innerHTML=rows.map((r,i)=>`<div class="qrow ${r.use?"":"off"}" data-i="${i}">
+      <div class="qtop"><label class="check"><input type="checkbox" data-f="use" ${r.use?"checked":""}> <input data-f="date" type="date" value="${esc(r.date)}" style="width:auto;padding:4px 6px"></label><span class="muted small qraw">"${esc(r.raw)}"</span></div>
+      <div class="qgrid"><label>운동<input data-f="name" value="${esc(r.name)}"></label>
+        <label>구분<select data-f="cat">${["유산소","근력","기타"].map(c=>`<option ${c===r.cat?"selected":""}>${c}</option>`).join("")}</select></label>
+        <label>시간(분)<input data-f="min" type="number" min="0" value="${v(r.min)}"></label>
+        <label>세트<input data-f="sets" type="number" min="0" value="${v(r.sets)}"></label></div>
+      <div class="qgrid"><label>무게<input data-f="weight" value="${esc(v(r.weight))}" placeholder="25kg"></label>
+        <label>횟수<input data-f="reps" type="number" min="0" value="${v(r.reps)}"></label>
+        <label style="grid-column:span 2">설정<input data-f="setting" value="${esc(v(r.setting))}" placeholder="경사 12 · 속도 5"></label></div>
+    </div>`).join("");
+    const by={};rows.filter(r=>r.use).forEach(r=>{by[r.date]=(by[r.date]||0)+(r.min||0)});
+    const goal=o.minGoal();
+    $("wqSaveRow").hidden=false;
+    $("wqSum").innerHTML=`${rows.filter(r=>r.use).length}개 · `+Object.keys(by).sort().map(d=>`${d.slice(5).replace("-","/")} <b class="num">${by[d]}분</b>${by[d]>=goal?" ✅":""}`).join(" · ");
+    $("wqSave").disabled=!rows.some(r=>r.use)}
+  $("wqReview").addEventListener("change",e=>{const el=e.target;const w=el.closest(".qrow");if(!w)return;const r=rows[+w.dataset.i],f=el.dataset.f;
+    if(f==="use")r.use=el.checked;else if(["min","sets","reps"].includes(f)){const n=parseFloat(el.value);r[f]=isFinite(n)?n:null}else r[f]=el.value.trim()||null;render()});
+  $("wqParse").addEventListener("click",()=>{const t=$("wqText").value.trim();if(!t){o.toast("한 운동을 적어 주세요");return}
+    rows=QUICKW.parse(t,o.defDate(),o.parseDate);if(!rows.length){o.toast("운동을 찾지 못했어요");return}o.toast(`운동 ${rows.length}개를 알아들었어요`);render()});
+  $("wqClear").addEventListener("click",()=>{rows=[];$("wqText").value="";render()});
+  $("wqSave").addEventListener("click",async()=>{const use=rows.filter(r=>r.use&&r.name);if(!use.length)return;$("wqSave").disabled=true;
+    const ok=await o.save(use);if(ok){rows=[];$("wqText").value="";render();o.toast(`🏃 운동 ${use.length}개 한꺼번에 기록!`)}else $("wqSave").disabled=false});
 }
 
 /* ===== 빠른 입력: 붙여넣은 글에서 날짜·끼니·음식·양을 알아듣기 ===== */
@@ -765,7 +857,7 @@ const QUICK=(function(){
       let date=cDate,meal=cMeal,body=line;
       const ci=line.search(/[:：]/);
       const head=ci>=0?line.slice(0,ci):line.slice(0,24);
-      const d=parseDate(head);if(d)date=d;
+      const d=(typeof QUICKW!=="undefined"&&QUICKW.relDate(head))||parseDate(head);if(d)date=d;
       const mm=MEALS.find(x=>head.includes(x));if(mm)meal=mm==="야식"?"간식":mm;cDate=date;cMeal=meal;
       if(ci>=0)body=line.slice(ci+1);else if(d||mm)body=line.replace(/^.*?(아침|점심|저녁|간식|야식)\s*/,"");
       // 괄호 속 소스처럼 쉼표가 괄호 안에 있으면 바깥 쉼표로만 나눔
@@ -782,7 +874,7 @@ const QUICK=(function(){
         else{row.unit=row.unit||"개";row.note="목록에 없어요"}
         rows.push(row)})});
     return rows}
-  return {parse,match,convert,norm};
+  return {parse,match,convert,norm,parseDate};
 })();
 
 /* 리뷰 표: 각 줄을 고치고 한꺼번에 저장 */
@@ -859,7 +951,7 @@ if(!reduced)setInterval(()=>{frame^=1;drawAll()},420);
 
 /* ================= pixel art ================= */
 /* 체형 5단계 (BMI, 대한비만학회 기준 18.5/23/25 + 17 미만 매우 마름) */
-function bodyOf(bmi){const T=[[17,"매우 마름",10],[18.5,"약간 마름",12],[23,"보통",14],[25,"통통",16],[Infinity,"뚱뚱",18]];let i=T.findIndex(t=>bmi<t[0]);if(i<0)i=2;return{i,max:T[i][0],label:T[i][1],w:T[i][2]}}
+function bodyOf(bmi){const T=[[17,"매우 마름",10],[18.5,"약간 마름",12],[23,"보통",14],[25,"통통",18],[Infinity,"뚱뚱",22]];let i=T.findIndex(t=>bmi<t[0]);if(i<0)i=2;return{i,max:T[i][0],label:T[i][1],w:T[i][2]}}
 function bodyScale(bmi){const t=bodyOf(bmi);return ["매우 마름","약간 마름","보통","통통","뚱뚱"].map(l=>({label:l})).map((b,i)=>i===t.i?`<b style="color:var(--gold)">[${b.label}]</b>`:`<span class="muted">${b.label}</span>`).join(" · ")};
 function drawHero(ctx,kind,f,bmi,crown){
   const P=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h)};
