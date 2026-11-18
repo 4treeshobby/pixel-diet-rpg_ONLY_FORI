@@ -859,9 +859,8 @@ if(!reduced)setInterval(()=>{frame^=1;drawAll()},420);
 
 /* ================= pixel art ================= */
 /* 체형 5단계 (BMI, 대한비만학회 기준 18.5/23/25 + 17 미만 매우 마름) */
-const BODY=[{max:17,label:"매우 마름",w:10},{max:18.5,label:"약간 마름",w:12},{max:23,label:"보통",w:14},{max:25,label:"통통",w:16},{max:Infinity,label:"뚱뚱",w:18}];
-const bodyOf=bmi=>{const i=BODY.findIndex(b=>bmi<b.max);return Object.assign({i},BODY[i<0?2:i])};
-const bodyScale=bmi=>{const t=bodyOf(bmi);return BODY.map((b,i)=>i===t.i?`<b style="color:var(--gold)">[${b.label}]</b>`:`<span class="muted">${b.label}</span>`).join(" · ")};
+function bodyOf(bmi){const T=[[17,"매우 마름",10],[18.5,"약간 마름",12],[23,"보통",14],[25,"통통",16],[Infinity,"뚱뚱",18]];let i=T.findIndex(t=>bmi<t[0]);if(i<0)i=2;return{i,max:T[i][0],label:T[i][1],w:T[i][2]}}
+function bodyScale(bmi){const t=bodyOf(bmi);return ["매우 마름","약간 마름","보통","통통","뚱뚱"].map(l=>({label:l})).map((b,i)=>i===t.i?`<b style="color:var(--gold)">[${b.label}]</b>`:`<span class="muted">${b.label}</span>`).join(" · ")};
 function drawHero(ctx,kind,f,bmi,crown){
   const P=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h)};
   const W=48,H=56,cx=24;
