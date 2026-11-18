@@ -220,6 +220,13 @@ input[type="date"],input[type="number"],input,select{min-width:0;max-width:100%}
 input[type="date"]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-height:44px;text-align:left}
 input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .qtop input[type="date"]{width:auto;min-height:0;display:inline-block}
+
+.ent-tools{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+.entries li{grid-template-columns:auto 1fr auto auto}
+.entries li .pick{width:18px;height:18px;min-height:0;margin:0;accent-color:var(--gold)}
+.entries li.sel{background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.btn.sm{font-size:14px;padding:6px 10px;box-shadow:3px 3px 0 #0f0e1f}
+.toast .undo{margin-left:10px;background:#fff;color:#2b2850;border:2px solid #0f0e1f;border-radius:2px;padding:2px 8px;font:inherit;font-size:14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -385,6 +392,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 
   <div class="box">
     <h2>페이지에서 넣은 기록 <span class="tag" id="entCount">0</span></h2>
+    <div class="ent-tools"><label class="check small"><input type="checkbox" id="entAll"> 전체 선택</label><button class="btn alt sm" type="button" id="entDel" disabled>🗑 선택 삭제</button></div>
     <ul class="entries" id="entries"></ul>
     <p class="small muted" style="margin:10px 0 0">여기서 넣은 기록은 바로 게임에 반영돼요. Claude에게 "다이어트 RPG 동기화해줘"라고 하면 계산표에도 옮겨 적고, 대기 중인 칼로리도 계산해 둘게요.</p>
   </div>
@@ -739,6 +747,12 @@ function updatePreview(){
     $("mPreview").innerHTML=pend?'<span class="pill wait">계산 대기</span> Claude가 나중에 칼로리를 채워요':isFinite(k)?`<b class="num">${fmt(q*k)}kcal</b> · 나트륨 ${fmt(q*(n||0))}mg`:"1단위당 칼로리를 넣거나 'Claude가 나중에 계산'을 체크해 주세요."}
   else $("mPreview").textContent="음식을 고르면 칼로리가 계산돼요.";
 }
+function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
+  b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
+function entPickState(){const all=[...document.querySelectorAll("#entries .pick")],on=all.filter(c=>c.checked);
+  $("entDel").disabled=!on.length;$("entDel").textContent=on.length?`🗑 선택 삭제 (${on.length})`:"🗑 선택 삭제";
+  $("entAll").checked=all.length>0&&on.length===all.length;$("entAll").indeterminate=on.length>0&&on.length<all.length;
+  all.forEach(c=>c.closest("li").classList.toggle("sel",c.checked))}
 function toast(t){const el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),2600)}
 function initForms(){
   const t=iso(today());["mDate","wDate","iDate","cStart","cEnd"].forEach(id=>$(id).value=t);
@@ -770,9 +784,16 @@ function initForms(){
     const doc={type:"condition",start:$("cStart").value,end:$("cEnd").value,kind:$("cKind").value};
     if(doc.end<doc.start){toast("종료일이 시작일보다 빨라요");return}
     if(await save(doc))toast("🌙 컨디션 기록! 회복 주간으로 표시돼요")});
-  $("entries").addEventListener("click",async e=>{const b=e.target.closest(".del");if(!b||!col)return;
-    if(!b.classList.contains("arm")){b.classList.add("arm");b.textContent="정말 삭제";setTimeout(()=>{b.classList.remove("arm");b.textContent="삭제"},3000);return}
-    try{await (String(b.dataset.id).startsWith("L")?localCol:col).doc(b.dataset.id).delete();toast("삭제했어요")}catch(err){toast("삭제하지 못했어요. 잠시 후 다시 해 주세요")}});
+  async function removeEntries(ids){if(!col||!ids.length)return;const gone=[];let fail=0;
+    for(const id of ids){const x=ENTRIES.find(v=>v.id===id);if(!x)continue;
+      try{await (String(id).startsWith("L")?localCol:col).doc(id).delete();gone.push(x)}catch(err){fail++}}
+    if(fail)toast(`${fail}개는 삭제하지 못했어요. 다시 해 주세요`);
+    if(gone.length)toastUndo(`🗑 ${gone.length}개 삭제했어요`,async()=>{for(const x of gone){const d=Object.assign({},x);const loc=String(d.id).startsWith("L");delete d.id;delete d.local;
+        if(loc||!dbCol){const a=lget();a.push(Object.assign({id:x.id,local:true},d));lset(a)}else{try{await dbCol.add(d)}catch(e){}}}refreshEntries();toast("되돌렸어요")})}
+  $("entries").addEventListener("click",e=>{const b=e.target.closest(".del");if(!b)return;removeEntries([b.dataset.id])});
+  $("entries").addEventListener("change",e=>{if(e.target.classList.contains("pick"))entPickState()});
+  $("entAll").addEventListener("change",e=>{document.querySelectorAll("#entries .pick").forEach(c=>c.checked=e.target.checked);entPickState()});
+  $("entDel").addEventListener("click",()=>removeEntries([...document.querySelectorAll("#entries .pick:checked")].map(c=>c.dataset.id)));
   $("closet").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b||b.disabled)return;dressOverride=b.dataset.k===M.auto?null:b.dataset.k;renderCloset();renderHome();drawAll();toast("마을에서 입어볼 수 있어요")});
   $("autoDress").addEventListener("click",()=>{dressOverride=null;renderCloset();renderHome();drawAll()});
   $("lvUpOk").addEventListener("click",()=>$("lvUp").classList.remove("on"));
@@ -818,7 +839,8 @@ function renderEntries(){
   $("entCount").textContent=list.length;
   const lbl=e=>e.type==="meal"?`🍙 ${mdw(parse(e.date))} ${e.meal} · ${esc(e.name)} ${e.qty}${esc(e.unit)}`:e.type==="workout"?`🏃 ${mdw(parse(e.date))} ${esc(e.name)}${e.min?" "+e.min+"분":""}${e.sets?` ${e.sets}세트`:""}`:e.type==="inbody"?`🧍 ${mdw(parse(e.date))} 인바디 ${e.w}kg`:`🌙 ${md(parse(e.start))}~${md(parse(e.end))} ${esc(e.kind)}`;
   const val=e=>e.type==="meal"?(e.pending?'<span class="pill wait">계산 대기</span>':`<span class="num">${fmt(e.kcal)}kcal</span>`):'<span></span>';
-  $("entries").innerHTML=list.length?list.map(e=>`<li><span>${lbl(e)}</span>${val(e)}<button type="button" class="del" data-id="${esc(e.id)}">삭제</button></li>`).join(""):'<li class="muted"><span>아직 없어요. 위에서 기록해 보세요!</span></li>';
+  $("entries").innerHTML=list.length?list.map(e=>`<li><input type="checkbox" class="pick" data-id="${esc(e.id)}" aria-label="선택"><span>${lbl(e)}</span>${val(e)}<button type="button" class="del" data-id="${esc(e.id)}">삭제</button></li>`).join(""):'<li class="muted" style="grid-template-columns:1fr"><span>아직 없어요. 위에서 기록해 보세요!</span></li>';
+  entPickState();
 }
 async function connectDb(){
   const LOCALMSG="로그인 없이 이 기기에 저장하고 있어요. 나중에 설정에서 한꺼번에 동기화할 수 있어요.";
