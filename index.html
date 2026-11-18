@@ -227,6 +227,33 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .entries li.sel{background:color-mix(in srgb,var(--gold) 14%,transparent)}
 .btn.sm{font-size:14px;padding:6px 10px;box-shadow:3px 3px 0 #0f0e1f}
 .toast .undo{margin-left:10px;background:#fff;color:#2b2850;border:2px solid #0f0e1f;border-radius:2px;padding:2px 8px;font:inherit;font-size:14px;cursor:pointer}
+
+/* 달력 */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-head .back{padding:4px 12px}
+.cal-dow,.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.cal-dow{margin-bottom:4px}.cal-dow span{font-size:12px;color:var(--ink-dim)}
+.cal-dow span:nth-child(6){color:#6fa8ff}.cal-dow span:nth-child(7){color:var(--red)}
+.cd{background:var(--panel-2);border:2px solid #0f0e1f;border-radius:2px;padding:5px 0;display:grid;justify-items:center;gap:4px;cursor:pointer;color:var(--ink);font:inherit;min-height:46px;min-width:0}
+.cd.empty{background:none;border:0;cursor:default}
+.cd .n{font-size:13px;line-height:1}
+.cd.today{outline:2px solid var(--gold);outline-offset:-4px}
+.cd.sel{background:var(--gold);color:#2b2850}
+.cd.rest{box-shadow:inset 0 -4px 0 var(--pink)}
+.cd.future{opacity:.45}
+.dots{display:flex;gap:3px}
+.dots i,.cdot{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid transparent;box-sizing:border-box}
+.cdot{vertical-align:-1px}
+.dots i.ex.hit,.cdot.ex.hit{background:var(--mint);border-color:var(--mint)}
+.dots i.ex.part,.cdot.ex.part{border-color:var(--mint)}
+.dots i.dt.ok,.cdot.dt.ok{background:var(--gold);border-color:var(--gold)}
+.dots i.dt.over,.cdot.dt.over{border-color:var(--red)}
+.dots i.dt.pend,.cdot.dt.pend{border-color:var(--ink-dim)}
+.cdot.ex:not(.hit):not(.part),.cdot.dt:not(.ok):not(.over):not(.pend){border-color:var(--line)}
+.cdot.rest{background:var(--pink);border-radius:2px;height:6px;width:12px}
+.cal-meals{display:grid;gap:6px;margin-top:8px}
+.menu{grid-template-columns:repeat(5,minmax(0,1fr))}
+.menu a{font-size:12px;word-break:keep-all}
 </style>
 </head>
 <body>
@@ -272,6 +299,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <a href="#quest"><span class="i">🗺️</span>메인 퀘스트<span class="s">보스 맵</span></a>
     <a href="#today"><span class="i">🍙</span>오늘의 연료<span class="s">식단</span></a>
     <a href="#week"><span class="i">⚔️</span>주간 퀘스트<span class="s">운동방</span></a>
+    <a href="#calendar"><span class="i">📅</span>달력<span class="s">운동·식단 체크</span></a>
     <a href="#charts"><span class="i">📈</span>기록 그래프<span class="s">체중·칼로리·운동</span></a>
     <a href="#badges"><span class="i">🏆</span>업적<span class="s" id="mBadge"></span></a>
     <a href="#closet"><span class="i">👗</span>옷장<span class="s">코스튬</span></a>
@@ -438,7 +466,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <h2><span id="weekTag"></span></h2>
     <p style="margin:0" id="weekStatus"></p>
     <div class="days" id="weekDays"></div>
-    <p class="muted small" style="margin:10px 0 0">규칙: 월요일 시작, 하루 30분 이상 운동한 날이 주 2회 이상이면 달성. 미달성 시 벌금 5천원.</p>
+    <p class="muted small" style="margin:10px 0 0" id="weekRule"></p>
   </div>
   <div class="box">
     <h2>지난 기록</h2>
@@ -488,6 +516,16 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <div class="tabs" role="group" aria-label="화면 테마" style="grid-template-columns:1fr 1fr"><button type="button" data-theme-set="dark" aria-pressed="false">🌙 어둡게</button><button type="button" data-theme-set="light" aria-pressed="false">☀️ 밝게</button></div>
   </div>
   <div class="box" style="display:grid;gap:10px">
+    <h2>주간 운동 퀘스트</h2>
+    <form id="fQuest" style="display:grid;gap:10px">
+      <div class="row3"><label for="qrMin">하루 최소(분)<input id="qrMin" type="number" min="1" inputmode="numeric"></label><label for="qrDays">주 몇 회<input id="qrDays" type="number" min="1" max="7" inputmode="numeric"></label><label for="qrFine">벌금(원)<input id="qrFine" type="number" min="0" step="1000" inputmode="numeric"></label></div>
+      <label for="qrFrom">언제부터 (그 주 월요일부터 적용)<input id="qrFrom" type="date"></label>
+      <button class="btn" type="submit" id="qrSave">✔ 퀘스트 규칙 저장</button>
+    </form>
+    <ul class="entries" id="questRules"></ul>
+    <p class="small muted" style="margin:0">지난 주들은 그때 규칙 그대로 계산돼요.</p>
+  </div>
+  <div class="box" style="display:grid;gap:10px">
     <h2>저장·동기화</h2>
     <p class="small" id="syncState" style="margin:0"></p>
     <p class="small muted" style="margin:0">로그인이 안 되는 곳(GitHub 페이지 등)에서 기록하면 이 기기에 저장돼요. 나중에 claude.ai에서 열어 한꺼번에 올리거나, 동기화 코드로 다른 기기에 옮길 수 있어요.</p>
@@ -501,6 +539,19 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <h2>기타</h2>
     <a class="btn alt" href="#title" style="text-decoration:none;text-align:center">🏠 타이틀 화면 보기</a>
   </div>
+</section>
+
+<!-- ===== 달력 ===== -->
+<section class="screen" id="s-calendar" aria-label="달력">
+  <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>달력</h1></div>
+  <div class="box">
+    <div class="cal-head"><button class="back" type="button" id="calPrev" aria-label="이전 달">◀</button><h2 id="calTitle" style="margin:0"></h2><button class="back" type="button" id="calNext" aria-label="다음 달">▶</button></div>
+    <div class="cal-dow" aria-hidden="true"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <p class="small" id="calSum" style="margin:10px 0 4px"></p>
+    <p class="small muted cal-legend" style="margin:0"><span class="cdot ex hit"></span> 운동 완료 · <span class="cdot ex part"></span> 조금 함 · <span class="cdot dt ok"></span> 식단 목표 이하 · <span class="cdot dt over"></span> 초과 · <span class="cdot rest"></span> 회복 기간</p>
+  </div>
+  <div class="box" id="calDetail"></div>
 </section>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -530,7 +581,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 
-const SCREENS=["title","home","record","stats","quest","today","week","charts","badges","closet","journal","settings"];
+const SCREENS=["title","home","record","stats","quest","today","week","calendar","charts","badges","closet","journal","settings"];
 function route(){
   const h=(location.hash||"").replace("#","");
   const name=SCREENS.includes(h)?h:"title";
@@ -548,12 +599,14 @@ fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
 /* ---------- merge base data + page entries ---------- */
 function merged(){
   const D=JSON.parse(JSON.stringify(BASE));
+  D.settings.questRules=D.settings.questRules||[Object.assign({from:"2000-01-03"},D.settings.quest)];
   ENTRIES.forEach(e=>{
     if(e.type==="meal")D.meals.push([e.date,e.meal,e.name,e.qty,e.unit||"",e.kcal||0,e.na||0,e.pending?1:0]);
     else if(e.type==="workout")D.workouts.push([e.date,e.cat,e.name,e.min||null,e.sets||null,e.weight||null,e.reps||null,e.setting||null]);
     else if(e.type==="inbody")D.inbody.push([e.date+"T12:00",e.w,e.smm,e.pbf,e.fat??null,e.bmr??null,e.vis??null,e.score??null]);
     else if(e.type==="condition")D.condition.push([e.start,e.end,e.kind]);
     else if(e.type==="food")D.foods.push([e.name,e.unit,e.kcal,e.na]);
+    else if(e.type==="quest")D.settings.questRules.push({from:e.from,minMinutes:e.minMinutes,days:e.days,fine:e.fine});
   });
   D.inbody.sort((a,b)=>a[0].localeCompare(b[0]));
   return D;
@@ -570,6 +623,9 @@ const PRIORITY=["kendo","pole","basketball","crossfit","running","gym","treadmil
 
 function compute(D){
   const S=D.settings,T=today(),tIso=iso(T);
+  const rules=S.questRules.slice().sort((a,b)=>a.from.localeCompare(b.from));
+  const ruleFor=ds=>{let r=rules[0];rules.forEach(x=>{if(x.from<=ds)r=x});return r};
+  S.quest=Object.assign({},S.quest,ruleFor(iso(monday(T))));
   const days={};
   D.meals.forEach(r=>{const [d,meal,name,q,u,k,na,pend]=r;(days[d]=days[d]||{kcal:0,na:0,items:[],pending:0});days[d].kcal+=k;days[d].na+=na;if(pend)days[d].pending++;days[d].items.push({meal,name,q,u,k,na,pend})});
   const ex={};
@@ -584,13 +640,13 @@ function compute(D){
   const kcalOkDays=completedDays.filter(d=>days[d].kcal<=tol);
   const naOkDays=completedDays.filter(d=>days[d].na<=S.naGoal);
   const exDates=Object.keys(ex).sort();
-  const exDays=exDates.filter(d=>ex[d].min>=S.quest.minMinutes);
+  const exDays=exDates.filter(d=>ex[d].min>=ruleFor(iso(monday(parse(d)))).minMinutes);
   const weeks=[];
   if(exDates.length){let w=monday(parse(exDates[0]));const end=monday(T);
     while(w<=end){const dates=[...Array(7)].map((_,i)=>addD(w,i));
-      const hit=dates.filter(d=>ex[iso(d)]&&ex[iso(d)].min>=S.quest.minMinutes).length;
+      const rule=ruleFor(iso(w));const hit=dates.filter(d=>ex[iso(d)]&&ex[iso(d)].min>=rule.minMinutes).length;
       const min=dates.reduce((a,d)=>a+(ex[iso(d)]?ex[iso(d)].min:0),0);
-      weeks.push({start:w,dates,hit,min,rest:dates.some(inRest),current:+w===+monday(T),ok:hit>=S.quest.days});w=addD(w,7)}}
+      weeks.push({start:w,dates,hit,min,rest:dates.some(inRest),current:+w===+monday(T),ok:hit>=rule.days,rule});w=addD(w,7)}}
   const lost=Math.max(0,S.startWeight-latest.w);
   const weekOk=weeks.filter(w=>w.ok).length;
   const xpParts=[
@@ -611,14 +667,14 @@ function compute(D){
   if(te){auto=PRIORITY.find(k=>te.kinds.has(k))||"gym";reason="오늘 "+[...new Set(te.items.filter(i=>i.min).map(i=>i.name))].join("·")+" 완료"}
   else if(inRest(T)){auto="rest";reason="회복 주간이에요. 푹 쉬어요"}
   else if(exDates.length){const ld=exDates[exDates.length-1];auto=PRIORITY.find(k=>ex[ld].kinds.has(k))||"gym";reason="최근 운동 "+mdw(parse(ld))}
-  return {D,S,T,tIso,days,ex,cond,inRest,ib,latest,first,prev,lastWith,tol,completedDays,kcalOkDays,naOkDays,exDates,exDays,weeks,lost,xpParts,xp,L,
+  return {ruleFor,rules,D,S,T,tIso,days,ex,cond,inRest,ib,latest,first,prev,lastWith,tol,completedDays,kcalOkDays,naOkDays,exDates,exDays,weeks,lost,xpParts,xp,L,
     into:xp-need(L),span:need(L+1)-need(L),title:TITLES.filter(t=>L>=t[0]).pop()[1],doneKinds,auto,reason,crown:latest.w<=80,bmi:latest.w/Math.pow(S.heightCm/100,2)};
 }
 
 /* ---------- render ---------- */
 function rebuild(){
   M=compute(merged());
-  renderHome();renderStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();
+  renderHome();renderStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderQuestRules();
   weightChart(M.ib,M.S);kcalChart(M.days,M.T,M.S);exChart(M.weeks.slice(-8),M.S);
   drawAll();
   if(lastLevel!==null&&M.L>lastLevel){$("lvUpText").textContent="LV."+M.L+" "+M.title+"(이)가 되었어요!";$("lvUp").classList.add("on");$("lvUpOk").focus()}
@@ -680,12 +736,13 @@ function renderWeek(){
   const {weeks,ex,S,T,tIso}=M;
   const tw=weeks.find(w=>w.current)||{dates:[...Array(7)].map((_,i)=>addD(monday(T),i)),hit:0,ok:false};
   $("weekTag").textContent="이번 주 "+md(tw.dates[0])+"~"+md(tw.dates[6]);
-  $("weekStatus").innerHTML=tw.ok?`<span class="up">✔ 이번 주 퀘스트 달성!</span> 30분 이상 ${tw.hit}회`:`30분 이상 ${tw.hit}회 / ${S.quest.days}회 · <span class="down">${S.quest.days-tw.hit}회 더 하면 벌금 면제</span>`;
+  $("weekStatus").innerHTML=tw.ok?`<span class="up">✔ 이번 주 퀘스트 달성!</span> ${S.quest.minMinutes}분 이상 ${tw.hit}회`:`${S.quest.minMinutes}분 이상 ${tw.hit}회 / ${S.quest.days}회 · <span class="down">${S.quest.days-tw.hit}회 더 하면 벌금 면제</span>`;
+  $("weekRule").textContent=`규칙: 월요일 시작, 하루 ${S.quest.minMinutes}분 이상 운동한 날이 주 ${S.quest.days}회 이상이면 달성. 미달성 시 벌금 ${fmt(S.quest.fine)}원. (설정에서 바꿀 수 있어요)`;
   $("weekDays").innerHTML=tw.dates.map(d=>{const e=ex[iso(d)];const cls=e&&e.min>=S.quest.minMinutes?"hit":e?"part":"";
     return`<div class="day ${cls} ${iso(d)===tIso?"today":""}">${DOW[d.getDay()]}<span class="m num">${e?e.min+"'":"-"}</span></div>`}).join("");
-  $("weekHistory").innerHTML=weeks.slice(-12).reverse().map(w=>`<div class="wk ${w.ok?"ok":w.current?"":"fail"} ${w.current?"now":""}">${md(w.start)}~<span class="r">${w.ok?"CLEAR":w.current?"진행중":"FAIL"}</span>${w.hit}회 · ${w.min}분${w.rest?'<br><span class="rest">회복 주간</span>':""}</div>`).join("");
+  $("weekHistory").innerHTML=weeks.slice(-12).reverse().map(w=>`<div class="wk ${w.ok?"ok":w.current?"":"fail"} ${w.current?"now":""}">${md(w.start)}~<span class="r">${w.ok?"CLEAR":w.current?"진행중":"FAIL"}</span>${w.hit}/${w.rule.days}회 · ${w.min}분${w.rest?'<br><span class="rest">회복 주간</span>':""}</div>`).join("");
   const done=weeks.filter(w=>!w.current),fails=done.filter(w=>!w.ok);
-  $("fineText").innerHTML=`지난 ${done.length}주 중 <span class="up">${done.filter(w=>w.ok).length}주 달성</span> · 누적 벌금 <b class="down">${fmt(fails.length*S.quest.fine)}원</b>`+(fails.some(w=>w.rest)?` <span class="muted">(그중 회복 주간 ${fails.filter(w=>w.rest).length}주)</span>`:"");
+  $("fineText").innerHTML=`지난 ${done.length}주 중 <span class="up">${done.filter(w=>w.ok).length}주 달성</span> · 누적 벌금 <b class="down">${fmt(fails.reduce((a,w)=>a+(w.rule.fine||0),0))}원</b>`+(fails.some(w=>w.rest)?` <span class="muted">(그중 회복 주간 ${fails.filter(w=>w.rest).length}주)</span>`:"");
 }
 function renderBadges(){
   const {D,latest,lost,days,kcalOkDays,naOkDays,weeks,S,lastWith}=M;
@@ -729,6 +786,10 @@ function refreshEntries(){ENTRIES=DBENT.concat(lget());rebuild();renderSync()}
 const localCol={add:async doc=>{const a=lget();a.push(Object.assign({id:"L"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),local:true},doc));if(!lset(a))throw{code:"local_full"};refreshEntries()},
   doc:id=>({delete:async()=>{lset(lget().filter(e=>e.id!==id));refreshEntries()}})};
 function useLocal(msg){if(dbCol)return;col=localCol;$("dbNote").hidden=false;$("dbNote").textContent=msg;setFormsEnabled(true);refreshEntries()}
+function renderQuestRules(){if(!$("questRules")||!M)return;
+  $("questRules").innerHTML=M.rules.filter((r,i,a)=>!a.slice(i+1).some(x=>x.from===r.from)).reverse().map((r,i)=>`<li style="grid-template-columns:1fr auto"><span>${r.from<"2001"?"처음부터":md(parse(r.from))+" 주부터"} · ${r.minMinutes}분 이상 주 ${r.days}회</span><span class="num muted">${fmt(r.fine)}원</span></li>`).join("");
+  if(!$("qrMin").dataset.touched){$("qrMin").value=M.S.quest.minMinutes;$("qrDays").value=M.S.quest.days;$("qrFine").value=M.S.quest.fine;$("qrFrom").value=iso(monday(today()))}}
+function calInfo(){return calInfoFactory(M,{kcalGoal:M.S.kcalGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,mealItems:d=>d.items.map(i=>({meal:i.meal,name:i.name,kcal:i.k})),exItems:e=>e.items})}
 function renderSync(){const n=lget().length;if(!$("syncState"))return;
   $("syncState").innerHTML=(dbCol?"✅ Claude 저장소에 연결됨":"📦 로그인 없이 이 기기에 저장 중")+` · 이 기기에만 있는 기록 <b class="num">${n}개</b>`;
   $("syncUp").disabled=!dbCol||!n;
@@ -747,6 +808,44 @@ function updatePreview(){
     $("mPreview").innerHTML=pend?'<span class="pill wait">계산 대기</span> Claude가 나중에 칼로리를 채워요':isFinite(k)?`<b class="num">${fmt(q*k)}kcal</b> · 나트륨 ${fmt(q*(n||0))}mg`:"1단위당 칼로리를 넣거나 'Claude가 나중에 계산'을 체크해 주세요."}
   else $("mPreview").textContent="음식을 고르면 칼로리가 계산돼요.";
 }
+/* ===== 달력: 날짜별 운동·식단 동그라미 ===== */
+const CAL={y:null,m:null,sel:null};
+function renderCalendar(info){
+  // info(isoStr) → {ex:"hit"|"part"|null, diet:"ok"|"over"|"pend"|null, rest:bool, html:string}
+  const T=today();if(CAL.y==null){CAL.y=T.getFullYear();CAL.m=T.getMonth()}
+  const first=new Date(CAL.y,CAL.m,1),last=new Date(CAL.y,CAL.m+1,0);
+  const lead=(first.getDay()+6)%7;const tIso=iso(T);
+  $("calTitle").textContent=`${CAL.y}년 ${CAL.m+1}월`;
+  let cells="",exN=0,dietN=0;
+  for(let i=0;i<lead;i++)cells+='<span class="cd empty"></span>';
+  for(let d=1;d<=last.getDate();d++){const ds=iso(new Date(CAL.y,CAL.m,d));const r=info(ds);
+    if(r.ex==="hit")exN++;if(r.diet==="ok")dietN++;
+    const future=ds>tIso;
+    cells+=`<button type="button" class="cd ${ds===tIso?"today":""} ${ds===CAL.sel?"sel":""} ${r.rest?"rest":""} ${future?"future":""}" data-d="${ds}" aria-label="${CAL.m+1}월 ${d}일${r.ex==="hit"?", 운동 완료":""}${r.diet==="ok"?", 식단 완료":""}">
+      <span class="n num">${d}</span><span class="dots"><i class="ex ${r.ex||""}"></i><i class="dt ${r.diet||""}"></i></span></button>`}
+  $("calGrid").innerHTML=cells;
+  $("calSum").innerHTML=`이번 달 운동 완료 <b class="num up">${exN}일</b> · 식단 완료 <b class="num" style="color:var(--gold)">${dietN}일</b>`;
+  const sd=CAL.sel&&CAL.sel.slice(0,7)===`${CAL.y}-${String(CAL.m+1).padStart(2,"0")}`?CAL.sel:null;
+  $("calDetail").innerHTML=sd?info(sd).html:'<p class="small muted" style="margin:0">날짜를 누르면 그날 기록을 보여줘요.</p>';
+}
+function initCalendar(info){
+  $("calPrev").addEventListener("click",()=>{CAL.m--;if(CAL.m<0){CAL.m=11;CAL.y--}renderCalendar(info())});
+  $("calNext").addEventListener("click",()=>{CAL.m++;if(CAL.m>11){CAL.m=0;CAL.y++}renderCalendar(info())});
+  $("calGrid").addEventListener("click",e=>{const b=e.target.closest(".cd[data-d]");if(!b)return;CAL.sel=CAL.sel===b.dataset.d?null:b.dataset.d;renderCalendar(info())});
+}
+function calInfoFactory(M,opt){
+  // opt: {kcalGoal, minFor(iso)->minutes, mealItems(day)->[{meal,name,kcal,pend}], exItems(ex)->[{name,min}]}
+  return ds=>{const d=M.days[ds],e=M.ex[ds],rest=M.inRest(parse(ds));const need=opt.minFor(ds);
+    const exS=e?(e.min>=need?"hit":"part"):null;
+    let diet=null;if(d){diet=d.pending?"pend":d.kcal<=M.tol?"ok":"over"}
+    let h=`<h3 style="font-size:16px;margin:0 0 6px">${mdw(parse(ds))}${rest?' <span class="pill" style="background:var(--pink);color:#2b2850">회복</span>':""}</h3>`;
+    h+=`<p class="small" style="margin:0 0 4px"><span class="cdot ex ${exS||""}"></span> 운동 ${e?`<b class="num">${e.min}분</b> · `+opt.exItems(e).map(i=>esc(i.name)+(i.min?` ${i.min}분`:"")).join(", "):'<span class="muted">기록 없음</span>'}${exS==="hit"?' <span class="up">완료</span>':exS==="part"?` <span class="muted">(${need}분 이상이면 완료)</span>`:""}</p>`;
+    h+=`<p class="small" style="margin:0"><span class="cdot dt ${diet||""}"></span> 식단 ${d?`<b class="num">${fmt(d.kcal)}kcal</b> / ${fmt(opt.kcalGoal)}`+(diet==="ok"?' <span class="up">완료</span>':diet==="over"?' <span class="down">초과</span>':' <span class="muted">계산 대기 있음</span>'):'<span class="muted">기록 없음</span>'}</p>`;
+    if(d){const items=opt.mealItems(d);h+='<div class="cal-meals">'+["아침","점심","저녁","간식"].filter(m=>items.some(i=>i.meal===m)).map(m=>{const its=items.filter(i=>i.meal===m);
+      return`<div class="meal-row"><b>${m}</b><span>${its.map(i=>esc(i.name)).join(", ")}</span><span class="num">${fmt(its.reduce((a,i)=>a+(i.kcal||0),0))}</span></div>`}).join("")+'</div>'}
+    return{ex:exS,diet,rest,html:h}}
+}
+
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
 function entPickState(){const all=[...document.querySelectorAll("#entries .pick")],on=all.filter(c=>c.checked);
@@ -797,6 +896,12 @@ function initForms(){
   $("closet").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b||b.disabled)return;dressOverride=b.dataset.k===M.auto?null:b.dataset.k;renderCloset();renderHome();drawAll();toast("마을에서 입어볼 수 있어요")});
   $("autoDress").addEventListener("click",()=>{dressOverride=null;renderCloset();renderHome();drawAll()});
   $("lvUpOk").addEventListener("click",()=>$("lvUp").classList.remove("on"));
+  initCalendar(calInfo);
+  ["qrMin","qrDays","qrFine","qrFrom"].forEach(id=>$(id).addEventListener("input",()=>$("qrMin").dataset.touched=1));
+  $("fQuest").addEventListener("submit",async e=>{e.preventDefault();if(!col)return;
+    const n=id=>parseInt($(id).value,10);const doc={type:"quest",from:iso(monday(parse($("qrFrom").value||iso(today())))),minMinutes:n("qrMin"),days:n("qrDays"),fine:n("qrFine")||0};
+    if(!(doc.minMinutes>0)||!(doc.days>=1&&doc.days<=7)){toast("분과 횟수(1~7)를 확인해 주세요");return}
+    if(await save(doc)){delete $("qrMin").dataset.touched;toast(`⚔️ ${md(parse(doc.from))} 주부터 ${doc.minMinutes}분 × 주 ${doc.days}회로 바꿨어요`)}});
   $("syncUp").addEventListener("click",async()=>{if(!dbCol)return;const loc=lget();if(!loc.length)return;const btn=$("syncUp");btn.disabled=true;btn.textContent="올리는 중…";
     const have=new Set(DBENT.map(e=>e.id));let done=0;const left=[];
     for(const e of loc){if(have.has(e.id)){done++;continue}const d=Object.assign({},e);delete d.id;delete d.local;
@@ -835,7 +940,7 @@ async function save(doc,silent){
   catch(err){if(!silent)toast(err&&err.code==="local_full"?"이 기기 저장 공간이 가득 찼어요. 설정에서 동기화해 주세요":err&&err.code==="quota_exceeded"?"저장 공간이 가득 찼어요. Claude에게 동기화를 부탁해 주세요":"저장하지 못했어요. 다시 눌러 주세요");return false}
 }
 function renderEntries(){
-  const list=ENTRIES.filter(e=>e.type!=="food").slice().sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+  const list=ENTRIES.filter(e=>e.type!=="food"&&e.type!=="quest").slice().sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
   $("entCount").textContent=list.length;
   const lbl=e=>e.type==="meal"?`🍙 ${mdw(parse(e.date))} ${e.meal} · ${esc(e.name)} ${e.qty}${esc(e.unit)}`:e.type==="workout"?`🏃 ${mdw(parse(e.date))} ${esc(e.name)}${e.min?" "+e.min+"분":""}${e.sets?` ${e.sets}세트`:""}`:e.type==="inbody"?`🧍 ${mdw(parse(e.date))} 인바디 ${e.w}kg`:`🌙 ${md(parse(e.start))}~${md(parse(e.end))} ${esc(e.kind)}`;
   const val=e=>e.type==="meal"?(e.pending?'<span class="pill wait">계산 대기</span>':`<span class="num">${fmt(e.kcal)}kcal</span>`):'<span></span>';
@@ -971,7 +1076,7 @@ const QUICK=(function(){
       let date=cDate,meal=cMeal,body=line;
       const ci=line.search(/[:：]/);
       const head=ci>=0?line.slice(0,ci):line.slice(0,24);
-      const d=parseDate(head);if(d)date=d;
+      const d=(typeof QUICKW!=="undefined"&&QUICKW.relDate(head))||parseDate(head);if(d)date=d;
       const mm=MEALS.find(x=>head.includes(x));if(mm)meal=mm==="야식"?"간식":mm;cDate=date;cMeal=meal;
       if(ci>=0)body=line.slice(ci+1);else if(d||mm)body=line.replace(/^.*?(아침|점심|저녁|간식|야식)\s*/,"");
       // 괄호 속 소스처럼 쉼표가 괄호 안에 있으면 바깥 쉼표로만 나눔
@@ -988,7 +1093,7 @@ const QUICK=(function(){
         else{row.unit=row.unit||"개";row.note="목록에 없어요"}
         rows.push(row)})});
     return rows}
-  return {parse,match,convert,norm};
+  return {parse,match,convert,norm,parseDate};
 })();
 
 /* 리뷰 표: 각 줄을 고치고 한꺼번에 저장 */
