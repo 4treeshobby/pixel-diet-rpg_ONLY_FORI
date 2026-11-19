@@ -742,7 +742,7 @@ function renderStats(){
     {ico:"FAT",c:"var(--gold)",name:"체지방률 · 방어구 무게",val:latest.pbf.toFixed(1)+"%",d:dlt(latest.pbf,first.pbf,false,"%p")+" <span class='muted'>시작 대비</span>",note:"여성 표준 18~28%까지",pct:Math.max(0,Math.min(1,(first.pbf-latest.pbf)/(first.pbf-28)))},
     {ico:"VIS",c:"var(--red)",name:"내장지방 레벨 · 독",val:"Lv."+vis.vis,d:dlt(vis.vis,first.vis,false,"")+" <span class='muted'>시작 대비</span>",note:"10 미만이면 독 해제",pct:Math.max(0,Math.min(1,(first.vis-vis.vis)/(first.vis-9)))},
     {ico:"MP",c:"var(--mint)",name:"기초대사량 · 마나",val:fmt(bmr.bmr)+"kcal",d:"<span class='muted'>근육이 늘면 함께 올라가요</span>",note:"하루 목표 "+fmt(S.kcalGoal)+"kcal",pct:Math.min(1,bmr.bmr/1500)},
-    {ico:"BMI",c:"#b9a6ff",name:"체형 · "+bodyOf(M.bmi).label,val:M.bmi.toFixed(1),d:bodyScale(M.bmi),note:"키 "+S.heightCm+"cm · 보통은 18.5~22.9",pct:Math.max(0.05,Math.min(1,1-(M.bmi-22.9)/12))},
+    {ico:"BMI",c:"#b9a6ff",name:"체형 · "+bodyOf(M.bmi).label,val:M.bmi.toFixed(1),d:bodyScale(M.bmi),note:"키 "+S.heightCm+"cm · 대한비만학회 기준 "+BMI_STD(M.bmi),pct:Math.max(0.05,Math.min(1,1-(M.bmi-22.9)/12))},
     {ico:"PTS",c:"#b9a6ff",name:"인바디 점수",val:score.score+"점",d:dlt(score.score,first.score,true,"점")+" <span class='muted'>시작 대비</span>",note:"70점이 다음 목표",pct:score.score/100}];
   $("ibDate").textContent=md(latest.d)+" 측정";
   $("stats").innerHTML=rows.map(s=>`<div class="stat"><div class="ico" style="background:${s.c}">${s.ico}</div><div>
@@ -1359,6 +1359,7 @@ if(!reduced)setInterval(()=>{frame^=1;drawAll()},420);
 
 /* ================= pixel art ================= */
 /* 체형 5단계 (BMI, 대한비만학회 기준 18.5/23/25 + 17 미만 매우 마름) */
+const BMI_STD=b=>b<18.5?"저체중":b<23?"정상":b<25?"과체중(비만 전단계)":b<30?"비만 1단계":b<35?"비만 2단계":"고도비만";
 function bodyOf(bmi){const T=[[17,"매우 마름",10],[18.5,"약간 마름",12],[23,"보통",14],[25,"통통",18],[Infinity,"뚱뚱",22]];let i=T.findIndex(t=>bmi<t[0]);if(i<0)i=2;return{i,max:T[i][0],label:T[i][1],w:T[i][2]}}
 function bodyScale(bmi){const t=bodyOf(bmi);return ["매우 마름","약간 마름","보통","통통","뚱뚱"].map(l=>({label:l})).map((b,i)=>i===t.i?`<b style="color:var(--gold)">[${b.label}]</b>`:`<span class="muted">${b.label}</span>`).join(" · ")};
 function drawHero(ctx,kind,f,bmi,crown){
