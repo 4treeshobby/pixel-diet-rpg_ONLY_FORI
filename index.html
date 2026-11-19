@@ -287,6 +287,29 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .chip{font-size:12px;padding:2px 7px;border-radius:2px;background:var(--panel-2);border:1px solid var(--line);white-space:nowrap}.chip.ok{border-color:var(--mint)}.chip.bad{border-color:var(--red)}
 
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tiles>span{display:grid;gap:4px;background:var(--panel-2);border-radius:2px;padding:10px 12px}.tiles small{font-size:12px;color:var(--ink-dim)}.tiles b{font-size:24px}
+
+.kv.kin{font-size:13px;color:var(--ink-dim);padding-left:10px}
+
+/* 접고 펴기 */
+.acc .box>h2.acc-h{cursor:pointer;margin:0;user-select:none;-webkit-tap-highlight-color:transparent;min-height:28px}
+.acc .box>h2.acc-h::after{content:"▼";margin-left:auto;font-size:12px;color:var(--ink-dim);flex:none}
+.acc .box.open>h2.acc-h::after{content:"▲"}
+.acc .box.open>h2.acc-h{margin-bottom:12px}
+.acc .box:not(.open)>.acc-b{display:none}
+.acc .box:not(.open){padding-top:12px;padding-bottom:12px}
+.acc-s{font-size:13px;color:var(--ink-dim);font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc .box.open .acc-s{display:none}
+@media (min-width:900px){
+  .screen.acc.on{max-width:1280px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:start}
+  .screen.acc>.topbar,.screen.acc>footer,.screen.acc>p{grid-column:1/-1}
+  .acc .box>.acc-b{display:block!important}.acc .box>h2.acc-h{cursor:default;margin-bottom:12px}.acc .box>h2.acc-h::after{content:none}.acc .box .acc-s{display:none}
+  .acc .box:not(.open){padding:16px}
+}
+
+.screen.on>*{min-width:0}
+.acc .box>h2.acc-h{overflow:hidden}
+.acc-t{flex:none;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.acc-s{flex:1 1 auto}
 </style>
 </head>
 <body>
@@ -487,15 +510,15 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <!-- ===== 오늘의 연료 ===== -->
 <section class="screen" id="s-today" aria-label="오늘의 연료">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>오늘의 연료</h1><span class="tag" id="todayTag"></span></div>
-  <div class="box" id="fairyBox"></div>
-  <div class="box diary">
+  <div class="box" data-acc-title="🧚 요정 루미의 평가"><div id="fairyBox"></div></div>
+  <div class="box diary" data-acc-title="📊 날짜별 칼로리">
     <div class="dnav"><button class="back" type="button" id="dPrev" aria-label="전날">◀</button><b id="dLabel"></b><button class="back" type="button" id="dNext" aria-label="다음날">▶</button><button class="btn alt sm" type="button" id="dToday" hidden>오늘</button></div>
     <div class="dsum" id="dSum"></div>
     <div class="dgrid"><div id="dKcal"></div><div class="waffle" id="dWaffle" aria-hidden="true"></div></div>
     <div class="dgrid" style="border-bottom:0;padding-bottom:0"><div id="dNut"></div><div class="donut" id="dDonut"></div></div>
   </div>
   <div class="box">
-    <h2>식단 · 운동</h2>
+    <h2>🍙 식단 · 운동</h2>
     <h3 class="dh" style="margin-top:0">식단</h3><div class="meal" id="mealList"></div>
     <h3 class="dh">운동</h3><div class="meal" id="dEx"></div>
     <a class="btn" href="#record" style="text-decoration:none;text-align:center;margin-top:14px;display:block">+ 기록하기</a>
@@ -586,14 +609,14 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <!-- ===== 달력 ===== -->
 <section class="screen" id="s-calendar" aria-label="달력">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>달력</h1></div>
-  <div class="box">
+  <div class="box" data-acc-title="📅 달력">
     <div class="cal-head"><button class="back" type="button" id="calPrev" aria-label="이전 달">◀</button><h2 id="calTitle" style="margin:0"></h2><button class="back" type="button" id="calNext" aria-label="다음 달">▶</button></div>
     <div class="cal-dow" aria-hidden="true"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
     <div class="cal-grid" id="calGrid"></div>
     <p class="small muted cal-legend" style="margin:10px 0 0"><span class="cdot ex hit"></span> 운동 완료 · <span class="cdot ex part"></span> 조금 함 · <span class="cdot dt ok"></span> 식단 목표 이하 · <span class="cdot dt over"></span> 초과 · <span class="cdot rest"></span> 회복 기간</p>
   </div>
   <div class="box"><h2>이번 달</h2><p style="margin:0" id="calSum"></p></div>
-  <div class="box" id="calDetail"></div>
+  <div class="box" data-acc-title="📌 날짜 상세"><div id="calDetail"></div></div>
 </section>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -635,7 +658,7 @@ window.addEventListener("hashchange",route);route();
 let BASE=null,ENTRIES=[],M=null,dressOverride=null,lastLevel=null,frame=0;
 const today=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
 
-fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{BASE=d;rebuild();initForms();connectDb()})
+fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{BASE=d;initAccordion();rebuild();initForms();connectDb()})
   .catch(()=>{$("saveLine").textContent="기록 파일을 불러오지 못했어요. 페이지를 새로고침해 주세요."});
 
 /* ---------- merge base data + page entries ---------- */
@@ -833,7 +856,7 @@ function renderSync(){const n=lget().length;if(!$("syncState"))return;
   if(dbCol&&n){$("dbNote").hidden=false;$("dbNote").textContent=`이 기기에만 저장된 기록이 ${n}개 있어요. 설정 › 저장·동기화에서 올려 주세요.`}}
 const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s.replace(/\s+/g,""))));
 function renderFoods(){
-  foodMap=new Map();M.D.foods.forEach(f=>foodMap.set(f[0],{unit:f[1],kcal:f[2],na:f[3],g:f[4]||null,c:f[5],p:f[6],f:f[7]}));
+  foodMap=new Map();M.D.foods.forEach(f=>foodMap.set(f[0],{unit:f[1],kcal:f[2],na:f[3],g:f[4]||null,c:f[5],p:f[6],f:f[7],s:f[8]}));
   $("foodList").innerHTML=[...foodMap.keys()].sort((a,b)=>a.localeCompare(b,"ko")).map(n=>`<option value="${esc(n)}"></option>`).join("");
   updatePreview();
 }
@@ -861,6 +884,7 @@ function renderCalendar(info){
     cells+=`<button type="button" class="cd ${ds===tIso?"today":""} ${ds===CAL.sel?"sel":""} ${r.rest?"rest":""} ${future?"future":""}" data-d="${ds}" aria-label="${CAL.m+1}월 ${d}일${r.ex==="hit"?", 운동 완료":""}${r.diet==="ok"?", 식단 완료":""}">
       <span class="n num">${d}</span><span class="dots">${r.ex?`<i class="ex ${r.ex}"></i>`:""}${r.diet?`<i class="dt ${r.diet}"></i>`:""}</span></button>`}
   $("calGrid").innerHTML=cells;
+  accSum($("calSum"),`운동 ${exN}일 · 식단 ${dietN}일`);
   $("calSum").innerHTML=`<span class="tiles"><span><small>🏃 운동 완료</small><b class="num up">${exN}일</b></span><span><small>🍙 식단 완료</small><b class="num" style="color:var(--gold)">${dietN}일</b></span></span>`;
   const sd=CAL.sel&&CAL.sel.slice(0,7)===`${CAL.y}-${String(CAL.m+1).padStart(2,"0")}`?CAL.sel:null;
   $("calDetail").innerHTML=sd?info(sd).html:'<p class="small muted" style="margin:0">날짜를 누르면 그날 기록을 보여줘요.</p>';
@@ -868,7 +892,7 @@ function renderCalendar(info){
 function initCalendar(info){
   $("calPrev").addEventListener("click",()=>{CAL.m--;if(CAL.m<0){CAL.m=11;CAL.y--}renderCalendar(info())});
   $("calNext").addEventListener("click",()=>{CAL.m++;if(CAL.m>11){CAL.m=0;CAL.y++}renderCalendar(info())});
-  $("calGrid").addEventListener("click",e=>{const b=e.target.closest(".cd[data-d]");if(!b)return;CAL.sel=CAL.sel===b.dataset.d?null:b.dataset.d;renderCalendar(info())});
+  $("calGrid").addEventListener("click",e=>{const b=e.target.closest(".cd[data-d]");if(!b)return;CAL.sel=CAL.sel===b.dataset.d?null:b.dataset.d;renderCalendar(info());const bx=$("calDetail").closest(".box");if(CAL.sel&&bx&&bx.querySelector(".acc-h")){bx.classList.add("open");bx.querySelector(".acc-h").setAttribute("aria-expanded","true");setTimeout(()=>bx.scrollIntoView({block:"nearest",behavior:"smooth"}),30)}});
 }
 function calInfoFactory(M,opt){
   // opt: {kcalGoal, minFor(iso)->minutes, mealItems(day)->[{meal,name,kcal,pend}], exItems(ex)->[{name,min}]}
@@ -946,8 +970,9 @@ function fairyAdvice(X){
 function renderFairy(X){const r=fairyAdvice(X);const ico={red:"🔴",yel:"🟡",info:"🔵",good:"🟢"};
   const top=r.msgs[0];const say={S:"완벽해요!",A:"잘하고 있어요!",B:"조금만 신경 써요!",C:"요정이 걱정하고 있어요…"}[r.grade];
   if($("fairyLine"))$("fairyLine").innerHTML=`<b class="fairy-grade g${r.grade}">${r.grade}</b><span>${top?esc(top.t):say}</span>`;
-  if($("fairyBox"))$("fairyBox").innerHTML=`<div class="fairy-head"><canvas width="16" height="16" class="fairy-cv" aria-hidden="true"></canvas><div><b>요정 루미의 평가</b><br><span class="small muted">${say}</span></div><b class="fairy-grade big g${r.grade}">${r.grade}</b></div>
+  if($("fairyBox"))$("fairyBox").innerHTML=`<div class="fairy-head"><canvas width="16" height="16" class="fairy-cv" aria-hidden="true"></canvas><div><b>${say}</b><br><span class="small muted">최근 7일 식단·운동 기준</span></div><b class="fairy-grade big g${r.grade}">${r.grade}</b></div>
     <ul class="fairy-list">${r.msgs.map(m=>`<li class="${m.lv}"><span>${ico[m.lv]}</span><span>${esc(m.t)}</span></li>`).join("")}</ul>`;
+  accSum($("fairyBox"),`${r.grade}등급 · 조언 ${r.msgs.filter(m=>m.lv!=="good").length}개`);
   document.querySelectorAll(".fairy-cv").forEach(c=>drawFairy(c,0))}
 
 function fairyX(){const S=M.S;const days={};Object.entries(M.days).forEach(([d,v])=>days[d]={kcal:v.kcal,na:v.na,pending:v.pending>0,items:v.items.map(i=>({meal:i.meal,kcal:i.k}))});
@@ -981,7 +1006,7 @@ function metOf(name,setting,cat){
   return{met:cat==="근력"?5.0:cat==="유산소"?6.0:4.0,label:"기타 운동"}}
 function burnOf(item,w){if(!item.min||!w)return 0;return Math.round(metOf(item.name,item.setting,item.cat).met*w*item.min/60)}
 /* ===== 영양 (탄단지) ===== */
-function macroOf(name,kcal){const f=foodMap.get(name);if(!f||f.c==null||!f.kcal)return null;const r=kcal/f.kcal;return{c:f.c*r,p:f.p*r,f:f.f*r}}
+function macroOf(name,kcal){const f=foodMap.get(name);if(!f||f.c==null||!f.kcal)return null;const r=kcal/f.kcal;return{c:f.c*r,p:f.p*r,f:f.f*r,s:(f.s||0)*r}}
 /* ===== 식단 상세 (FatSecret 스타일) ===== */
 const DIARY={d:null};
 function renderDiary(o){
@@ -989,8 +1014,8 @@ function renderDiary(o){
   const tIso=iso(o.T);if(!DIARY.d||DIARY.d>tIso)DIARY.d=tIso;const ds=DIARY.d;
   $("dLabel").textContent=(ds===tIso?"오늘 · ":"")+mdw(parse(ds));$("dNext").disabled=ds>=tIso;$("dToday").hidden=ds===tIso;
   const day=o.dayOf(ds),items=day?day.items:[];
-  let kc=0,na=0,c=0,p=0,fa=0,unk=0;
-  items.forEach(i=>{kc+=i.kcal||0;na+=i.na||0;const m=macroOf(i.name,i.kcal||0);if(m){c+=m.c;p+=m.p;fa+=m.f}else if(i.kcal)unk++});
+  let kc=0,na=0,c=0,p=0,fa=0,su=0,unk=0;
+  items.forEach(i=>{kc+=i.kcal||0;na+=i.na||0;const m=macroOf(i.name,i.kcal||0);if(m){c+=m.c;p+=m.p;fa+=m.f;su+=m.s}else if(i.kcal)unk++});
   const exs=(o.exOf(ds)||[]).filter(e=>e.min).map(e=>Object.assign({},e,{burn:burnOf(e,o.w),info:metOf(e.name,e.setting,e.cat)}));
   const burn=exs.reduce((a,e)=>a+e.burn,0);
   const pct=o.goal?kc/o.goal:0,left=o.goal-kc;
@@ -1007,13 +1032,15 @@ function renderDiary(o){
   // 영양 + 도넛
   const kcC=c*4,kcP=p*4,kcF=fa*9,tot=kcC+kcP+kcF;
   const pc=tot?[kcC/tot,kcF/tot,kcP/tot]:[0,0,0];
-  $("dNut").innerHTML=`<div class="kv"><span>탄수화물</span><b class="num">${f1(c)}g</b></div><div class="kv"><span>단백질</span><b class="num">${f1(p)}g</b></div><div class="kv"><span>지방</span><b class="num">${f1(fa)}g</b></div>
+  $("dNut").innerHTML=`<div class="kv"><span>탄수화물</span><b class="num">${f1(c)}g</b></div><div class="kv kin"><span>└ 당류</span><b class="num">${f1(su)}g</b></div><div class="kv"><span>단백질</span><b class="num">${f1(p)}g</b></div><div class="kv"><span>지방</span><b class="num">${f1(fa)}g</b></div>
     <div class="kv"><span>나트륨</span><b class="num ${na>o.naGoal?"down":""}">${fmt(na)}<small>/${fmt(o.naGoal)}mg</small></b></div>
     ${unk?`<p class="small muted" style="margin:4px 0 0">영양성분 모르는 음식 ${unk}개는 탄단지에서 빠졌어요</p>`:""}`;
   const R=15.9155,C=["#7ec8e3","#f6c445","#f08a80"];let acc=0;
   const segs=tot?pc.map((v,i)=>{const s=`<circle r="${R}" cx="21" cy="21" fill="none" stroke="${C[i]}" stroke-width="9" stroke-dasharray="${(v*100).toFixed(2)} ${(100-v*100).toFixed(2)}" stroke-dashoffset="${(25-acc).toFixed(2)}"/>`;acc+=v*100;return s}).join(""):`<circle r="${R}" cx="21" cy="21" fill="none" stroke="var(--line)" stroke-width="9"/>`;
   $("dDonut").innerHTML=`<svg viewBox="0 0 42 42" role="img" aria-label="탄수 ${Math.round(pc[0]*100)}%, 지방 ${Math.round(pc[1]*100)}%, 단백질 ${Math.round(pc[2]*100)}%">${segs}</svg>
     <ul>${["탄수","지방","단백질"].map((n,i)=>`<li><span>${n}</span><b class="num">${Math.round(pc[i]*100)}%</b><i style="background:${C[i]}"></i></li>`).join("")}</ul>`;
+  accSum($("dSum"),`${fmt(kc)} / ${fmt(o.goal)}kcal · ${Math.round(pct*100)}%`);
+  accSum($("mealList"),`${["아침","점심","저녁","간식"].filter(m=>items.some(i=>i.meal===m)).join("·")||"식단 없음"} · 운동 ${exs.length?fmt(burn)+"kcal":"없음"}`);
   // 끼니
   $("mealList").innerHTML=items.length?["아침","점심","저녁","간식"].filter(m=>items.some(i=>i.meal===m)).map(m=>{const its=items.filter(i=>i.meal===m);
       return`<div class="meal-row"><b>${m}</b><span>${its.map(i=>esc(i.name)+(i.pend?' <span class="pill wait">계산 대기</span>':"")).join(", ")}</span><span class="num">${fmt(its.reduce((a,i)=>a+(i.kcal||0),0))}</span></div>`}).join("")
@@ -1033,6 +1060,33 @@ function renderAdv(rows){
   // rows: [{d, ex:"폴댄스 30분"|null, exOk, kcal|null, kOk, w|null, xp}]
   $("advLog").innerHTML=rows.slice(0,12).map(r=>`<li><span class="ad-d num">${mdw(parse(r.d))}</span><span class="ad-chips">${r.ex?`<span class="chip ${r.exOk?"ok":""}">🏃 ${esc(r.ex)}</span>`:""}${r.kcal!=null?`<span class="chip ${r.kOk?"ok":"bad"}">🍙 ${fmt(r.kcal)}kcal</span>`:""}${r.w!=null?`<span class="chip">⚖️ ${r.w}kg</span>`:""}</span><span class="xp">+${r.xp}</span></li>`).join("")||'<li class="muted">아직 기록이 없어요.</li>';
 }
+
+/* ===== 접고 펴기: 휴대폰에선 한 번에 한 칸만, PC에선 모두 펼쳐 여러 줄로 ===== */
+const ACC_WIDE=window.matchMedia?window.matchMedia("(min-width:900px)"):{matches:false,addEventListener(){}};
+function initAccordion(){
+  const SKIP=["s-title","s-setup","s-home","s-record","s-settings"],OPEN={"s-today":1};
+  document.querySelectorAll("section.screen").forEach(sec=>{
+    if(SKIP.includes(sec.id))return;
+    const boxes=[...sec.children].filter(el=>el.classList.contains("box")&&!el.classList.contains("fold"));
+    if(boxes.length<2)return;
+    sec.classList.add("acc");
+    boxes.forEach((bx,i)=>{
+      let h=[...bx.children].find(el=>el.tagName==="H2");
+      if(!h){h=document.createElement("h2");h.textContent=bx.dataset.accTitle||"";bx.prepend(h)}
+      const body=document.createElement("div");body.className="acc-b";
+      [...bx.childNodes].filter(n=>n!==h).forEach(n=>body.appendChild(n));bx.appendChild(body);
+      const t=document.createElement("span");t.className="acc-t";[...h.childNodes].forEach(n=>t.appendChild(n));h.appendChild(t);
+      h.classList.add("acc-h");h.setAttribute("role","button");h.tabIndex=0;
+      const sum=document.createElement("span");sum.className="acc-s";h.appendChild(sum);
+      const open=i===(OPEN[sec.id]||0);bx.classList.toggle("open",open);h.setAttribute("aria-expanded",String(open));
+      const toggle=()=>{if(ACC_WIDE.matches)return;const willOpen=!bx.classList.contains("open");
+        boxes.forEach(o=>{o.classList.remove("open");o.querySelector(".acc-h").setAttribute("aria-expanded","false")});
+        if(willOpen){bx.classList.add("open");h.setAttribute("aria-expanded","true");setTimeout(()=>bx.scrollIntoView({block:"nearest",behavior:"smooth"}),30)}};
+      h.addEventListener("click",e=>{if(e.target.closest("button,a,select,input"))return;toggle()});
+      h.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle()}});
+    })});
+}
+function accSum(el,text){const bx=el&&el.closest(".box");if(!bx)return;const s=bx.querySelector(".acc-h .acc-s");if(s)s.textContent=text||""}
 
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
