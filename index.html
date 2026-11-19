@@ -333,6 +333,8 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .boss-row{display:flex;gap:12px;align-items:center}.boss-cv{width:72px;height:72px;image-rendering:pixelated;flex:none}.boss-info{flex:1;display:grid;gap:4px;min-width:0}
 .dq{list-style:none;margin:0;padding:0;display:grid;gap:4px}.dq li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;padding:6px 8px;background:var(--panel-2);border-radius:2px}
 .dq li.ok{outline:2px solid var(--mint);outline-offset:-2px}.dq .num{font-size:12px;color:var(--ink-dim);white-space:nowrap}
+
+.boss-cv{filter:hue-rotate(150deg) saturate(1.3)}
 </style>
 </head>
 <body>
@@ -1139,7 +1141,7 @@ function tileScreen(id,labels,openIdx){const sec=$(id);if(!sec)return;
 /* ===== 일일 퀘스트 · 골드 · 보스 전투 ===== */
 const DQ=[["diet","🍙","식단 목표 지키기",30,10],["ex","🏃","운동 퀘스트 시간 채우기",40,15],["na","🧂","나트륨 기준 지키기",10,3],["w","⚖️","체중·인바디 기록",20,5]];
 const DQ_BONUS=[30,10],WEEK_REWARD=[100,50];
-const BOSS_POOL=[["떡볶이 슬라임","slime"],["라면 골렘","golem"],["치킨 드래곤","dragon"],["케이크 마녀","witch"],["야식 리치","lich"],["마라탕 오우거","golem"],["탕후루 기사","dragon"],["피자 거인","slime"],["요요 대마왕","king"]];
+const BOSS_POOL=[["귀찮음 슬라임","slime"],["늦잠 골렘","golem"],["야식 유혹 드래곤","dragon"],["핑계 마녀","witch"],["작심삼일 리치","lich"],["소파 오우거","golem"],["배달앱 드래곤","dragon"],["눕방 슬라임","slime"],["폭식 대마왕","king"]];
 const bossHp=i=>150+i*50;
 function gameCalc(X){
   // X: {T, days:{iso:{kcal,na,pending}}, ex:{iso:{min}}, wDates:Set, kOk(k), naGoal, minFor(iso), weeks:[{ok,current}]}
