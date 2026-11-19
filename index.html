@@ -356,6 +356,9 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 #map.world .node.done .kg{background:#2fb487}#map.world .node.now .kg{background:#ff4d6d}
 #map.world .node .nm{font-size:10px;color:#1c1a33;background:#fffd;padding:0 3px;border-radius:2px;line-height:1.35}
 #map.world .me{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;background:#ff4d6d;color:#fff;padding:1px 4px;border-radius:2px;white-space:nowrap}
+
+.qsel{width:auto!important;min-height:0!important;padding:3px 6px!important;font-size:13px!important;display:inline-block!important}
+.qbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -426,9 +429,10 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <h2>⚡ 빠른 입력 <span class="tag">BETA</span></h2>
     <p class="small muted" style="margin:0 0 8px">먹은 것을 그대로 적거나 붙여넣으세요. 줄마다 날짜·끼니를 앞에 쓰면 알아서 나눠요.</p>
     <label for="qText" class="sr">먹은 것</label>
+    <div class="qbar"><label for="qDate" class="small">날짜<input type="date" id="qDate"></label><label for="qMeal" class="small">끼니<select id="qMeal"><option>아침</option><option>점심</option><option>저녁</option><option>간식</option></select></label></div>
     <textarea id="qText" placeholder="1118 (수) 아침 : 곰곰 퀵오트밀 50g, 풀무원 그릭 허니 요거트 90g&#10;1117 저녁 : 햇반현미밥 105g, 곰곰반숙란 2개, 냉동브로콜리 50g"></textarea>
     <div class="qbtns" style="margin-top:8px"><button class="btn" type="button" id="qParse">🔍 알아듣기</button><button class="btn alt" type="button" id="qAsk" hidden>🤖 모르는 음식 Claude에게 묻기</button><button class="btn alt" type="button" id="qClear">지우기</button></div>
-    <p class="small muted" style="margin:8px 0 0">날짜·끼니를 안 쓴 줄은 아래 '하나씩 입력'의 날짜와 끼니로 들어가요.</p>
+    <p class="small muted" style="margin:8px 0 0">날짜·끼니를 안 쓴 줄은 위에서 고른 날짜·끼니로 들어가요. 알아듣기 뒤에도 줄마다 바꿀 수 있어요.</p>
   </div>
   <div id="qReview" data-panel="meal"></div>
   <div class="qsave" id="qSaveRow" hidden data-panel="meal"><span id="qSum"></span><button class="btn" type="button" id="qSave">✔ 모두 기록하기</button></div>
@@ -523,7 +527,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 
   <div class="box">
     <h2>페이지에서 넣은 기록 <span class="tag" id="entCount">0</span></h2>
-    <div class="ent-tools"><label class="check small"><input type="checkbox" id="entAll"> 전체 선택</label><button class="btn alt sm" type="button" id="entDel" disabled>🗑 선택 삭제</button></div>
+    <div class="ent-tools"><label class="check small"><input type="checkbox" id="entAll"> 전체 선택</label><span style="display:flex;gap:6px"><select id="entMeal" class="qsel" aria-label="고른 식단의 끼니 바꾸기"><option value="">끼니 바꾸기</option><option>아침</option><option>점심</option><option>저녁</option><option>간식</option></select><button class="btn alt sm" type="button" id="entDel" disabled>🗑 선택 삭제</button></span></div>
     <ul class="entries" id="entries"></ul>
     <p class="small muted" style="margin:10px 0 0">여기서 넣은 기록은 바로 게임에 반영돼요. Claude에게 "다이어트 RPG 동기화해줘"라고 하면 계산표에도 옮겨 적고, 대기 중인 칼로리도 계산해 둘게요.</p>
   </div>
@@ -1267,7 +1271,7 @@ function entPickState(){const all=[...document.querySelectorAll("#entries .pick"
 function toast(t){const el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),2600)}
 function initForms(){
   const t=iso(today());["mDate","wDate","iDate","cStart","cEnd"].forEach(id=>$(id).value=t);
-  const h=new Date().getHours();$("mMeal").value=h<10?"아침":h<15?"점심":h<21?"저녁":"간식";
+  const h=new Date().getHours();$("mMeal").value=h<10?"아침":h<15?"점심":h<21?"저녁":"간식";$("qMeal").value=$("mMeal").value;$("qDate").value=iso(today());
   ["mName","mQty","mKcal1","mNa1","mPending"].forEach(id=>$(id).addEventListener("input",updatePreview));
   document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
@@ -1305,6 +1309,12 @@ function initForms(){
   $("entries").addEventListener("change",e=>{if(e.target.classList.contains("pick"))entPickState()});
   $("entAll").addEventListener("change",e=>{document.querySelectorAll("#entries .pick").forEach(c=>c.checked=e.target.checked);entPickState()});
   $("entDel").addEventListener("click",()=>removeEntries([...document.querySelectorAll("#entries .pick:checked")].map(c=>c.dataset.id)));
+  $("entMeal").addEventListener("change",async e=>{const meal=e.target.value;e.target.value="";if(!meal||!col)return;
+    const ids=[...document.querySelectorAll("#entries .pick:checked")].map(c=>c.dataset.id);let n=0;const loc=lget();let locCh=false;
+    for(const id of ids){const x=ENTRIES.find(v=>v.id===id);if(!x||x.type!=="meal"||x.meal===meal)continue;
+      if(String(id).startsWith("L")){const y=loc.find(v=>v.id===id);if(y){y.meal=meal;locCh=true;n++}}
+      else{const d=Object.assign({},x,{meal});delete d.id;delete d.local;try{await dbCol.add(d);await dbCol.doc(id).delete();n++}catch(err){}}}
+    if(locCh)lset(loc);refreshEntries();toast(n?`🍙 ${n}개를 ${meal}으로 바꿨어요`:"바꿀 식단을 체크해 주세요")});
   $("closet").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b||b.disabled)return;dressOverride=b.dataset.k===M.auto?null:b.dataset.k;renderCloset();renderHome();drawAll();toast("마을에서 입어볼 수 있어요")});
   $("autoDress").addEventListener("click",()=>{dressOverride=null;renderCloset();renderHome();drawAll()});
   $("lvUpOk").addEventListener("click",()=>$("lvUp").classList.remove("on"));
@@ -1335,7 +1345,7 @@ function initForms(){
   initQuickW({toast,defDate:()=>$("wDate").value,parseDate:QUICK.parseDate,minGoal:()=>{try{return M.S.quest.minMinutes}catch(e){return 30}},
     save:async rows=>{if(!col){toast("저장소에 연결된 뒤 다시 눌러 주세요");return false}
       for(const r of rows){const ok=await save({type:"workout",date:r.date,cat:r.cat,name:r.name,min:r.min,sets:r.sets,weight:r.weight,reps:r.reps,setting:r.setting});if(!ok)return false}return true}});
-  initQuick({foods:()=>foodMap,toast,allowPending:true,defDate:()=>$("mDate").value,defMeal:()=>$("mMeal").value,
+  initQuick({foods:()=>foodMap,toast,allowPending:true,defDate:()=>$("qDate").value||$("mDate").value,defMeal:()=>$("qMeal").value,
     save:async rows=>{if(!col){toast("저장소에 연결된 뒤 다시 눌러 주세요");return false}
       for(const r of rows){const name=r.key||r.name;const pend=r.status==="pending";
         if(!r.key&&!pend&&r.kcal!=null&&r.qty>0)await save({type:"food",name,unit:r.unit||"개",kcal:(r.status==="claude"?r.perKcal:r.kcal/r.qty),na:(r.status==="claude"?(r.perNa||0):(r.na||0)/r.qty),est:r.status==="claude"},true);
@@ -1524,7 +1534,7 @@ function initQuick(o){
     box.innerHTML=rows.map((r,i)=>{
       const known=!!r.key;const badge=r.status==="ok"?'<span class="pill">✓ 인식</span>':r.status==="guess"?'<span class="pill">≈ 비슷한 음식</span>':r.status==="check"?'<span class="pill wait">단위 확인</span>':r.status==="claude"?'<span class="pill">🤖 Claude 추정</span>':r.status==="pending"?'<span class="pill wait">계산 대기</span>':'<span class="pill wait">? 칼로리 입력</span>';
       return`<div class="qrow ${r.use?"":"off"}" data-i="${i}">
-        <div class="qtop"><label class="check"><input type="checkbox" data-f="use" ${r.use?"checked":""}> <span class="muted small">${esc(r.date.slice(5).replace("-","/"))} ${esc(r.meal)}</span></label>${badge}<span class="muted small qraw">"${esc(r.raw)}"</span></div>
+        <div class="qtop"><label class="check"><input type="checkbox" data-f="use" ${r.use?"checked":""} aria-label="저장할 항목"></label><input data-f="date" type="date" value="${esc(r.date)}" class="qsel" aria-label="날짜"><select data-f="meal" class="qsel" aria-label="끼니">${["아침","점심","저녁","간식"].map(m=>`<option ${m===r.meal?"selected":""}>${m}</option>`).join("")}</select>${badge}<span class="muted small qraw">"${esc(r.raw)}"</span></div>
         <div class="qgrid">
           <label>음식<input data-f="name" list="foodList" value="${esc(known?r.key:r.name)}"></label>
           <label>양<input data-f="qty" type="number" step="any" min="0" value="${r.qty}"></label>
@@ -1549,6 +1559,8 @@ function initQuick(o){
     else{r.key=null;if(r.status==="ok"||r.status==="guess"||r.status==="check"){r.kcal=null;r.na=null;r.status="unknown";r.note="목록에 없어요"}}}
   $("qReview").addEventListener("change",e=>{const el=e.target;const w=el.closest(".qrow");if(!w)return;const i=+w.dataset.i,r=rows[i],f=el.dataset.f;
     if(f==="use")r.use=el.checked;
+    else if(f==="date"){if(el.value)r.date=el.value}
+    else if(f==="meal")r.meal=el.value;
     else if(f==="name"){r.name=el.value.trim();relook(i)}
     else if(f==="qty"){const old=r.qty||1;r.qty=parseFloat(el.value)||0;if(r.key){const fd=o.foods().get(r.key);r.kcal=r.qty*fd.kcal;r.na=r.qty*fd.na;r.status="ok"}else if(r.kcal!=null&&r.status!=="claude"){r.kcal=r.kcal/old*r.qty}else if(r.status==="claude"){r.kcal=r.perKcal*r.qty;r.na=(r.perNa||0)*r.qty}}
     else if(f==="unit")r.unit=el.value.trim();
