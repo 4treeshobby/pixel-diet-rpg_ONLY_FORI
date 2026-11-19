@@ -316,6 +316,14 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .wkr{display:grid;grid-template-columns:62px 58px 1fr 18px;gap:6px;align-items:center;background:var(--panel-2);border-radius:2px;padding:5px 8px;font-size:13px}
 .wkr .r{font-family:var(--font-pixel);font-size:8px}.wkr.ok .r{color:var(--mint)}.wkr.fail .r{color:var(--red)}.wkr.now{outline:2px solid var(--gold);outline-offset:-2px}
 #s-week .box h2{margin-bottom:8px}#s-week .days{margin-top:8px}
+
+/* 설정 버튼 */
+.set-menu{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.set-menu button{display:grid;justify-items:center;gap:4px;color:var(--ink);background:var(--panel);border:2px solid #0f0e1f;box-shadow:inset 0 0 0 2px var(--line),3px 3px 0 #0f0e1f;padding:10px 4px 8px;border-radius:4px;font:inherit;font-size:13px;cursor:pointer;word-break:keep-all}
+.set-menu button .i{font-size:22px;line-height:1}
+.set-menu button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #0f0e1f}
+.set-menu button[aria-expanded="true"]{background:var(--gold);color:#2b2850;box-shadow:inset 0 0 0 2px #0f0e1f,3px 3px 0 #0f0e1f}
+.set-hint{margin:0;text-align:center}
 </style>
 </head>
 <body>
@@ -607,7 +615,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <p class="small muted" style="margin:0">동기화 코드를 Claude 채팅에 붙여넣고 "다이어트 RPG 동기화해줘"라고 하면 식단 시트와 이 페이지 기본 데이터에도 반영해 드려요.</p>
   </div>
   <div class="box" style="display:grid;gap:10px">
-    <h2>기타</h2>
+    <h2>타이틀</h2>
     <a class="btn alt" href="#title" style="text-decoration:none;text-align:center">🏠 타이틀 화면 보기</a>
   </div>
 </section>
@@ -664,7 +672,7 @@ window.addEventListener("hashchange",route);route();
 let BASE=null,ENTRIES=[],M=null,dressOverride=null,lastLevel=null,frame=0;
 const today=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
 
-fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{BASE=d;initAccordion();rebuild();initForms();connectDb()})
+fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{BASE=d;initAccordion();initSettingsTiles();rebuild();initForms();connectDb()})
   .catch(()=>{$("saveLine").textContent="기록 파일을 불러오지 못했어요. 페이지를 새로고침해 주세요."});
 
 /* ---------- merge base data + page entries ---------- */
@@ -1097,6 +1105,20 @@ function initAccordion(){
     })});
 }
 function accSum(el,text){const bx=el&&el.closest(".box");if(!bx)return;const s=bx.querySelector(".acc-h .acc-s");if(s)s.textContent=text||""}
+
+/* ===== 설정: 버튼을 눌러 한 칸씩 열기 ===== */
+function initSettingsTiles(){const sec=$("s-settings");if(!sec)return;
+  const ICON={"화면 테마":"🎨","주간 운동 퀘스트":"⚔️","저장·동기화":"☁️","타이틀":"🏠","캐릭터·목표":"🧍","백업":"💾","처음부터 다시":"🗑️"};
+  const boxes=[...sec.children].filter(el=>el.classList.contains("box"));
+  const nav=document.createElement("nav");nav.className="set-menu";nav.setAttribute("aria-label","설정 항목");
+  boxes.forEach((bx,i)=>{const h=bx.querySelector("h2");const name=h?h.textContent.trim():"설정";bx.hidden=true;bx.id=bx.id||"setbox"+i;
+    const b=document.createElement("button");b.type="button";b.setAttribute("aria-expanded","false");b.setAttribute("aria-controls",bx.id);
+    b.innerHTML=`<span class="i">${ICON[name]||"⚙️"}</span>${esc(name)}`;
+    b.addEventListener("click",()=>{const open=bx.hidden;boxes.forEach(o=>o.hidden=true);nav.querySelectorAll("button").forEach(x=>x.setAttribute("aria-expanded","false"));
+      hint.hidden=open;if(open){bx.hidden=false;b.setAttribute("aria-expanded","true")}});
+    nav.appendChild(b)});
+  const hint=document.createElement("p");hint.className="small muted set-hint";hint.textContent="바꾸고 싶은 항목을 눌러 주세요.";
+  sec.querySelector(".topbar").after(nav,hint)}
 
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
