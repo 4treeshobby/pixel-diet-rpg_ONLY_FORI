@@ -324,6 +324,9 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .set-menu button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #0f0e1f}
 .set-menu button[aria-expanded="true"]{background:var(--gold);color:#2b2850;box-shadow:inset 0 0 0 2px #0f0e1f,3px 3px 0 #0f0e1f}
 .set-hint{margin:0;text-align:center}
+
+.cal-ex{margin:0 0 8px}.cal-exh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.cal-ex .burn{color:#ff9f43;font-size:16px}.cal-exr{display:flex;justify-content:space-between;font-size:13px;padding:3px 0 3px 20px;border-bottom:1px dashed var(--line)}
 </style>
 </head>
 <body>
@@ -863,7 +866,7 @@ function useLocal(msg){if(dbCol)return;col=localCol;$("dbNote").hidden=false;$("
 function renderQuestRules(){if(!$("questRules")||!M)return;
   $("questRules").innerHTML=M.rules.filter((r,i,a)=>!a.slice(i+1).some(x=>x.from===r.from)).reverse().map((r,i)=>`<li style="grid-template-columns:1fr auto"><span>${r.from<"2001"?"처음부터":md(parse(r.from))+" 주부터"} · ${r.minMinutes}분 이상 주 ${r.days}회</span><span class="num muted">${fmt(r.fine)}원</span></li>`).join("");
   if(!$("qrMin").dataset.touched){$("qrMin").value=M.S.quest.minMinutes;$("qrDays").value=M.S.quest.days;$("qrFine").value=M.S.quest.fine;$("qrFrom").value=iso(monday(today()))}}
-function calInfo(){return calInfoFactory(M,{kcalGoal:M.S.kcalGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,mealItems:d=>d.items.map(i=>({meal:i.meal,name:i.name,kcal:i.k})),exItems:e=>e.items})}
+function calInfo(){return calInfoFactory(M,{kcalGoal:M.S.kcalGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,mealItems:d=>d.items.map(i=>({meal:i.meal,name:i.name,kcal:i.k})),exItems:e=>e.items,w:M.ib.length?M.ib[M.ib.length-1].w:M.S.startWeight})}
 function renderSync(){const n=lget().length;if(!$("syncState"))return;
   $("syncState").innerHTML=(dbCol?"✅ Claude 저장소에 연결됨":"📦 로그인 없이 이 기기에 저장 중")+` · 이 기기에만 있는 기록 <b class="num">${n}개</b>`;
   $("syncUp").disabled=!dbCol||!n;
@@ -890,16 +893,16 @@ function renderCalendar(info){
   const first=new Date(CAL.y,CAL.m,1),last=new Date(CAL.y,CAL.m+1,0);
   const lead=(first.getDay()+6)%7;const tIso=iso(T);
   $("calTitle").textContent=`${CAL.y}년 ${CAL.m+1}월`;
-  let cells="",exN=0,dietN=0;
+  let cells="",exN=0,dietN=0,burnT=0,kT=0,kN=0;
   for(let i=0;i<lead;i++)cells+='<span class="cd empty"></span>';
   for(let d=1;d<=last.getDate();d++){const ds=iso(new Date(CAL.y,CAL.m,d));const r=info(ds);
-    if(r.ex==="hit")exN++;if(r.diet==="ok")dietN++;
+    if(r.ex==="hit")exN++;if(r.diet==="ok")dietN++;if(ds<=tIso){burnT+=r.burn||0;if(r.kcal!=null&&ds<tIso){kT+=r.kcal;kN++}}
     const future=ds>tIso;
     cells+=`<button type="button" class="cd ${ds===tIso?"today":""} ${ds===CAL.sel?"sel":""} ${r.rest?"rest":""} ${future?"future":""}" data-d="${ds}" aria-label="${CAL.m+1}월 ${d}일${r.ex==="hit"?", 운동 완료":""}${r.diet==="ok"?", 식단 완료":""}">
       <span class="n num">${d}</span><span class="dots">${r.ex?`<i class="ex ${r.ex}"></i>`:""}${r.diet?`<i class="dt ${r.diet}"></i>`:""}</span></button>`}
   $("calGrid").innerHTML=cells;
-  accSum($("calSum"),`운동 ${exN}일 · 식단 ${dietN}일`);
-  $("calSum").innerHTML=`<span class="tiles"><span><small>🏃 운동 완료</small><b class="num up">${exN}일</b></span><span><small>🍙 식단 완료</small><b class="num" style="color:var(--gold)">${dietN}일</b></span></span>`;
+  accSum($("calSum"),`운동 ${exN}일 · 🔥${fmt(burnT)} · 식단 ${dietN}일`);
+  $("calSum").innerHTML=`<span class="tiles"><span><small>🏃 운동 완료</small><b class="num up">${exN}일</b><small>🔥 총 ${fmt(burnT)}kcal 소모</small></span><span><small>🍙 식단 완료</small><b class="num" style="color:var(--gold)">${dietN}일</b><small>하루 평균 ${kN?fmt(kT/kN):0}kcal</small></span></span>`;
   const sd=CAL.sel&&CAL.sel.slice(0,7)===`${CAL.y}-${String(CAL.m+1).padStart(2,"0")}`?CAL.sel:null;
   $("calDetail").innerHTML=sd?info(sd).html:'<p class="small muted" style="margin:0">날짜를 누르면 그날 기록을 보여줘요.</p>';
 }
@@ -914,11 +917,13 @@ function calInfoFactory(M,opt){
     const exS=e?(e.min>=need?"hit":"part"):null;
     let diet=null;if(d){diet=d.pending?"pend":(M.kOk?M.kOk(d.kcal):d.kcal<=M.tol)?"ok":"over"}
     let h=`<h3 style="font-size:16px;margin:0 0 6px">${mdw(parse(ds))}${rest?' <span class="pill" style="background:var(--pink);color:#2b2850">회복</span>':""}</h3>`;
-    h+=`<p class="small" style="margin:0 0 4px"><span class="cdot ex ${exS||""}"></span> 운동 ${e?`<b class="num">${e.min}분</b> · `+opt.exItems(e).map(i=>esc(i.name)+(i.min?` ${i.min}분`:"")).join(", "):'<span class="muted">기록 없음</span>'}${exS==="hit"?' <span class="up">완료</span>':exS==="part"?` <span class="muted">(${need}분 이상이면 완료)</span>`:""}</p>`;
+    const exl=e?opt.exItems(e).filter(i=>i.min).map(i=>({n:i.name,min:i.min,k:burnOf(i,opt.w)})):[];const burn=exl.reduce((a,x)=>a+x.k,0);
+    h+=`<div class="cal-ex"><div class="cal-exh"><span><span class="cdot ex ${exS||""}"></span> 운동 ${e?`<b class="num">${e.min}분</b>`:'<span class="muted">기록 없음</span>'}${exS==="hit"?' <span class="up">완료</span>':exS==="part"?` <span class="muted small">(${need}분 이상이면 완료)</span>`:""}</span>${burn?`<b class="num burn">🔥 ${fmt(burn)}kcal</b>`:""}</div>
+      ${exl.map(x=>`<div class="cal-exr"><span>${esc(x.n)} <span class="muted">${x.min}분</span></span><span class="num up">−${fmt(x.k)}</span></div>`).join("")}</div>`;
     h+=`<p class="small" style="margin:0"><span class="cdot dt ${diet||""}"></span> 식단 ${d?`<b class="num">${fmt(d.kcal)}kcal</b> / ${fmt(opt.kcalGoal)}`+(diet==="ok"?' <span class="up">완료</span>':diet==="over"?` <span class="down">${M.kOk&&d.kcal<opt.kcalGoal?"부족":"초과"}</span>`:' <span class="muted">계산 대기 있음</span>'):'<span class="muted">기록 없음</span>'}</p>`;
     if(d){const items=opt.mealItems(d);h+='<div class="cal-meals">'+["아침","점심","저녁","간식"].filter(m=>items.some(i=>i.meal===m)).map(m=>{const its=items.filter(i=>i.meal===m);
       return`<div class="meal-row"><b>${m}</b><span>${its.map(i=>esc(i.name)).join(", ")}</span><span class="num">${fmt(its.reduce((a,i)=>a+(i.kcal||0),0))}</span></div>`}).join("")+'</div>'}
-    return{ex:exS,diet,rest,html:h}}
+    return{ex:exS,diet,rest,html:h,burn,kcal:d?d.kcal:null}}
 }
 
 /* ===== 칼로리 요정 루미: 식단·운동 평가 ===== */
