@@ -335,6 +335,14 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .dq li.ok{outline:2px solid var(--mint);outline-offset:-2px}.dq .num{font-size:12px;color:var(--ink-dim);white-space:nowrap}
 
 .boss-cv{filter:hue-rotate(150deg) saturate(1.3)}
+
+/* 상점 */
+.shop-top{display:flex;gap:12px;align-items:center;margin-bottom:10px}.shop-stage{width:110px;flex:none;margin:0}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.shop-item{display:grid;gap:6px;background:var(--panel-2);border:2px solid #0f0e1f;border-radius:2px;padding:8px;text-align:center}
+.shop-item.on{outline:2px solid var(--mint);outline-offset:-2px}.shop-item.pv{outline:2px dashed var(--gold);outline-offset:-2px}
+.shop-pick{all:unset;cursor:pointer;display:grid;gap:2px;justify-items:center;font-size:13px}.shop-pick .i{font-size:26px}
+.shop-pick:focus-visible{outline:2px solid var(--gold)}
 </style>
 </head>
 <body>
@@ -384,7 +392,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <a href="#calendar"><span class="i">📅</span>달력<span class="s">운동·식단 체크</span></a>
     <a href="#charts"><span class="i">📈</span>기록 그래프<span class="s">체중·칼로리·운동</span></a>
     <a href="#badges"><span class="i">🏆</span>업적<span class="s" id="mBadge"></span></a>
-    <a href="#closet"><span class="i">👗</span>옷장<span class="s">코스튬</span></a>
+    <a href="#closet"><span class="i">🛍️</span>옷장·상점<span class="s">코스튬·액세서리</span></a>
     <a href="#journal"><span class="i">📖</span>모험 일지<span class="s">경험치</span></a>
     <a href="#settings"><span class="i">⚙️</span>설정<span class="s">테마·동기화</span></a>
   </nav>
@@ -586,10 +594,17 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 
 <!-- ===== 옷장 ===== -->
 <section class="screen" id="s-closet" aria-label="옷장">
-  <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>옷장</h1></div>
+  <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>옷장·상점</h1></div>
+  <div class="box"><h2>🛍️ 상점 <span class="tag" id="shopGold"></span></h2>
+    <div class="shop-top"><div class="stage shop-stage"><canvas width="48" height="56" data-hero="shop" data-kind="default" aria-label="미리보기"></canvas></div>
+      <p class="small muted" style="margin:0">그림을 누르면 미리 입어봐요. 산 아이템은 언제든 입고 벗을 수 있어요. 골드는 메인 퀘스트 › 오늘의 퀘스트로 모여요.</p></div>
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+  <div class="box"><h2>👗 운동 의상</h2>
   <p class="small muted" style="margin:0">평소엔 그날 한 운동에 맞춰 자동으로 갈아입어요. 고른 옷은 마을에서 잠시 입혀볼 수 있어요. 잠긴 옷은 그 운동을 기록하면 열려요.</p>
-  <div class="closet" id="closet"></div>
-  <button class="btn alt" type="button" id="autoDress">자동 코스튬으로 돌아가기</button>
+    <div class="closet" id="closet"></div>
+    <button class="btn alt" type="button" id="autoDress">자동 코스튬으로 돌아가기</button>
+  </div>
 </section>
 
 <!-- ===== 모험 일지 ===== -->
@@ -691,6 +706,7 @@ fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
 /* ---------- merge base data + page entries ---------- */
 function merged(){
   const D=JSON.parse(JSON.stringify(BASE));
+  D.own=[];D.equip={};let eqAt="";
   D.settings.questRules=D.settings.questRules||[Object.assign({from:"2000-01-03"},D.settings.quest)];
   ENTRIES.forEach(e=>{
     if(e.type==="meal")D.meals.push([e.date,e.meal,e.name,e.qty,e.unit||"",e.kcal||0,e.na||0,e.pending?1:0]);
@@ -699,6 +715,8 @@ function merged(){
     else if(e.type==="condition")D.condition.push([e.start,e.end,e.kind]);
     else if(e.type==="food")D.foods.push([e.name,e.unit,e.kcal,e.na]);
     else if(e.type==="quest")D.settings.questRules.push({from:e.from,minMinutes:e.minMinutes,days:e.days,fine:e.fine});
+    else if(e.type==="buy")D.own.push(e.item);
+    else if(e.type==="equip"){if((e.createdAt||"")>=eqAt){eqAt=e.createdAt||"";D.equip=e.slots||{}}}
   });
   D.inbody.sort((a,b)=>a[0].localeCompare(b[0]));
   return D;
@@ -766,7 +784,7 @@ function compute(D){
 /* ---------- render ---------- */
 function rebuild(){
   M=compute(merged());
-  renderHome();renderStats();splitStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());renderGame({key:"fori",T:M.T,days:M.days,ex:M.ex,wDates:new Set(M.ib.map(x=>iso(x.d))),kOk:k=>k<=M.tol,naGoal:M.S.naGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,weeks:M.weeks});renderQuestRules();
+  renderHome();renderStats();splitStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());GAME=renderGame({key:"fori",T:M.T,days:M.days,ex:M.ex,wDates:new Set(M.ib.map(x=>iso(x.d))),kOk:k=>k<=M.tol,naGoal:M.S.naGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,weeks:M.weeks});EQUIP=M.D.equip;{const left=renderShop({earned:GAME.gold,own:M.D.own,equip:M.D.equip});$("hGold").textContent="💰 "+fmt(left)+"G"}renderQuestRules();
   weightChart(M.ib,M.S);kcalChart(M.days,M.T,M.S);exChart(M.weeks.slice(-8),M.S);
   drawAll();
   if(lastLevel!==null&&M.L>lastLevel){$("lvUpText").textContent="LV."+M.L+" "+M.title+"(이)가 되었어요!";$("lvUp").classList.add("on");$("lvUpOk").focus()}
@@ -1094,7 +1112,7 @@ function renderAdv(rows){
 const ACC_WIDE=window.matchMedia?window.matchMedia("(min-width:900px)"):{matches:false,addEventListener(){}};
 function initAccordion(){
   const SKIP=["s-title","s-setup","s-home","s-record","s-settings"];
-  const MODE={"s-quest":"none","s-week":"none","s-today":"single","s-charts":"single"};
+  const MODE={"s-quest":"none","s-closet":"none","s-week":"none","s-today":"single","s-charts":"single"};
   const OPEN={"s-calendar":[0,1],"s-stats":[0,1]};
   document.querySelectorAll("section.screen").forEach(sec=>{
     const mode=MODE[sec.id]||"multi";
@@ -1124,7 +1142,8 @@ function accSum(el,text){const bx=el&&el.closest(".box");if(!bx)return;const s=b
 /* ===== 설정·메인 퀘스트: 버튼을 눌러 한 칸씩 열기 ===== */
 function initSettingsTiles(){
   tileScreen("s-settings",null,-1);
-  tileScreen("s-quest",[["⚔️","보스 전투"],["📜","오늘의 퀘스트"],["🗺️","체중 지도"],["📈","진행도"]],0)}
+  tileScreen("s-quest",[["⚔️","보스 전투"],["📜","오늘의 퀘스트"],["🗺️","체중 지도"],["📈","진행도"]],0);
+  tileScreen("s-closet",[["🛍️","상점"],["👗","운동 의상"]],0)}
 function tileScreen(id,labels,openIdx){const sec=$(id);if(!sec)return;
   const ICON={"화면 테마":"🎨","주간 운동 퀘스트":"⚔️","저장·동기화":"☁️","타이틀":"🏠","캐릭터·목표":"🧍","백업":"💾","처음부터 다시":"🗑️"};
   const boxes=[...sec.children].filter(el=>el.classList.contains("box"));
@@ -1172,6 +1191,40 @@ function renderGame(X){
   try{localStorage.setItem("dietrpg.kills."+(X.key||""),String(G.killed))}catch(e){}
   return G}
 
+/* ===== 상점: 골드로 액세서리·화장 사기 ===== */
+const SHOP=[
+  {id:"ribbon",slot:"hat",icon:"🎀",name:"리본 핀",price:150,draw:(P,cx,Y)=>{P(cx+2,Y(3),3,3,"#ff86bd");P(cx+6,Y(3),3,3,"#ff86bd");P(cx+5,Y(4),1,1,"#e0487e")}},
+  {id:"cap",slot:"hat",icon:"🧢",name:"야구 모자",price:200,draw:(P,cx,Y)=>{P(cx-8,Y(3),16,5,"#4a6fd8");P(cx-6,Y(2),12,1,"#4a6fd8");P(cx-8,Y(7),21,2,"#2f4fae");P(cx-1,Y(4),2,2,"#fff")}},
+  {id:"crown",slot:"hat",icon:"👑",name:"작은 왕관",price:600,draw:(P,cx,Y)=>{P(cx-6,Y(3),12,3,"#ffd166");for(let x=cx-6;x<cx+6;x+=4)P(x,Y(1),2,2,"#ffd166");P(cx-1,Y(4),2,1,"#ff4d6d")}},
+  {id:"shades",slot:"face",icon:"🕶️",name:"선글라스",price:250,draw:(P,cx,Y)=>{P(cx-7,Y(14),6,3,"#141414");P(cx+1,Y(14),6,3,"#141414");P(cx-1,Y(15),2,1,"#141414");P(cx-6,Y(14),2,1,"#7ec8ff");P(cx+2,Y(14),2,1,"#7ec8ff")}},
+  {id:"pearl",slot:"neck",icon:"📿",name:"진주 목걸이",price:200,draw:(P,cx,Y)=>{for(let x=cx-4;x<=cx+3;x+=2)P(x,Y(23),1,1,"#ffffff");P(cx,Y(24),1,1,"#ffffff")}},
+  {id:"scarf",slot:"neck",icon:"🧣",name:"빨간 목도리",price:300,draw:(P,cx,Y)=>{P(cx-6,Y(21),12,3,"#e0485e");P(cx+2,Y(24),3,6,"#e0485e");P(cx+2,Y(29),3,1,"#ffd166")}},
+  {id:"blush",slot:"cheek",icon:"🌸",name:"볼터치",price:100,draw:(P,cx,Y)=>{P(cx-7,Y(17),3,1,"#ff7aa8");P(cx+4,Y(17),3,1,"#ff7aa8")}},
+  {id:"lip",slot:"lip",icon:"💋",name:"체리 립",price:120,draw:(P,cx,Y)=>{P(cx-2,Y(19),4,1,"#d81b60")}},
+  {id:"shadow",slot:"eye",icon:"✨",name:"보라 아이섀도",price:150,draw:(P,cx,Y)=>{P(cx-6,Y(13),3,1,"#b48cff");P(cx+2,Y(13),3,1,"#b48cff")}},
+  {id:"wings",slot:"back",icon:"🪽",name:"천사 날개",price:800,back:true,draw:(P,cx,Y,f)=>{const u=f?1:0;P(cx-17,Y(20)-u,8,9,"#ffffff");P(cx-15,Y(18)-u,5,2,"#ffffff");P(cx+9,Y(20)-u,8,9,"#ffffff");P(cx+10,Y(18)-u,5,2,"#ffffff");P(cx-16,Y(23)-u,6,1,"#dfe8ff");P(cx+10,Y(23)-u,6,1,"#dfe8ff")}}];
+const SHOP_BY=Object.fromEntries(SHOP.map(i=>[i.id,i]));
+let EQUIP={},EQUIP_ACTIVE={},PREVIEW={};
+function drawEquipBack(P,cx,Y,kind,f){const it=SHOP_BY[EQUIP_ACTIVE.back];if(it&&kind!=="rest")it.draw(P,cx,Y,f)}
+function drawEquip(P,cx,Y,kind,f){if(kind==="rest")return;Object.entries(EQUIP_ACTIVE).forEach(([slot,id])=>{const it=SHOP_BY[id];if(!it||it.back)return;if(kind==="kendo"&&(slot==="hat"||slot==="face"))return;it.draw(P,cx,Y,f)})}
+function shopSpent(own){return own.reduce((a,id)=>a+(SHOP_BY[id]?SHOP_BY[id].price:0),0)}
+function renderShop(o){
+  // o: {earned, own:[ids], equip:{slot:id}}
+  const own=new Set(o.own),left=o.earned-shopSpent(o.own);
+  $("shopGold").textContent="💰 "+fmt(left)+"G";
+  $("shopGrid").innerHTML=SHOP.map(it=>{const has=own.has(it.id),on=o.equip[it.slot]===it.id,pv=PREVIEW[it.slot]===it.id;
+    return`<div class="shop-item ${on?"on":""} ${pv?"pv":""}"><button type="button" class="shop-pick" data-pv="${it.id}" aria-label="${esc(it.name)} 미리보기"><span class="i">${it.icon}</span><b>${esc(it.name)}</b></button>
+      ${has?`<button type="button" class="btn ${on?"alt":""} sm" data-eq="${it.id}">${on?"벗기":"입기"}</button>`:`<button type="button" class="btn sm" data-buy="${it.id}" ${left<it.price?"disabled":""}>💰 ${fmt(it.price)}G</button>`}</div>`}).join("");
+  return left}
+function initShop(get,act){
+  // get()→{earned,own,equip}; act.buy(id) / act.equip(newEquip) → Promise
+  $("shopGrid").addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;const s=get();
+    if(b.dataset.pv){const it=SHOP_BY[b.dataset.pv];PREVIEW=PREVIEW[it.slot]===it.id?{}:{[it.slot]:it.id};renderShop(s);drawAll();return}
+    if(b.dataset.buy){const it=SHOP_BY[b.dataset.buy];const left=s.earned-shopSpent(s.own);if(left<it.price){toast("골드가 부족해요");return}
+      b.disabled=true;if(await act.buy(it.id)){const eq=Object.assign({},s.equip,{[it.slot]:it.id});await act.equip(eq);PREVIEW={};toast(`${it.icon} ${it.name} 구매! 바로 입었어요`)}else b.disabled=false;return}
+    if(b.dataset.eq){const it=SHOP_BY[b.dataset.eq];const eq=Object.assign({},s.equip);if(eq[it.slot]===it.id)delete eq[it.slot];else eq[it.slot]=it.id;await act.equip(eq)}})}
+
+let GAME=null;
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
 function entPickState(){const all=[...document.querySelectorAll("#entries .pick")],on=all.filter(c=>c.checked);
@@ -1223,6 +1276,7 @@ function initForms(){
   $("autoDress").addEventListener("click",()=>{dressOverride=null;renderCloset();renderHome();drawAll()});
   $("lvUpOk").addEventListener("click",()=>$("lvUp").classList.remove("on"));
   initCalendar(calInfo);initDiary(()=>renderToday());
+  initShop(()=>({earned:GAME.gold,own:M.D.own,equip:M.D.equip}),{buy:id=>save({type:"buy",item:id}),equip:eq=>save({type:"equip",slots:eq},true)});
   ["qrMin","qrDays","qrFine","qrFrom"].forEach(id=>$(id).addEventListener("input",()=>$("qrMin").dataset.touched=1));
   $("fQuest").addEventListener("submit",async e=>{e.preventDefault();if(!col)return;
     const n=id=>parseInt($(id).value,10);const doc={type:"quest",from:iso(monday(parse($("qrFrom").value||iso(today())))),minMinutes:n("qrMin"),days:n("qrDays"),fine:n("qrFine")||0};
@@ -1266,7 +1320,7 @@ async function save(doc,silent){
   catch(err){if(!silent)toast(err&&err.code==="local_full"?"이 기기 저장 공간이 가득 찼어요. 설정에서 동기화해 주세요":err&&err.code==="quota_exceeded"?"저장 공간이 가득 찼어요. Claude에게 동기화를 부탁해 주세요":"저장하지 못했어요. 다시 눌러 주세요");return false}
 }
 function renderEntries(){
-  const list=ENTRIES.filter(e=>e.type!=="food"&&e.type!=="quest").slice().sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+  const list=ENTRIES.filter(e=>!["food","quest","buy","equip"].includes(e.type)).slice().sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
   $("entCount").textContent=list.length;
   const lbl=e=>e.type==="meal"?`🍙 ${mdw(parse(e.date))} ${e.meal} · ${esc(e.name)} ${e.qty}${esc(e.unit)}`:e.type==="workout"?`🏃 ${mdw(parse(e.date))} ${esc(e.name)}${e.min?" "+e.min+"분":""}${e.sets?` ${e.sets}세트`:""}`:e.type==="inbody"?`🧍 ${mdw(parse(e.date))} 인바디 ${e.w}kg`:`🌙 ${md(parse(e.start))}~${md(parse(e.end))} ${esc(e.kind)}`;
   const val=e=>e.type==="meal"?(e.pending?'<span class="pill wait">계산 대기</span>':`<span class="num">${fmt(e.kcal)}kcal</span>`):'<span></span>';
@@ -1491,6 +1545,7 @@ function drawAll(){
   if(!M)return;
   document.querySelectorAll("canvas[data-hero]").forEach(c=>{
     const k=c.dataset.kind||(c.dataset.hero==="title"||c.dataset.hero==="lvup"?"default":(dressOverride||M.auto));
+    EQUIP_ACTIVE=c.dataset.hero==="shop"?Object.assign({},EQUIP,PREVIEW):EQUIP;
     drawHero(c.getContext("2d"),k,frame,M.bmi,M.crown)});
 }
 if(!reduced)setInterval(()=>{frame^=1;drawAll()},420);
@@ -1525,6 +1580,7 @@ function drawHero(ctx,kind,f,bmi,crown){
   if(kind==="basketball"){P(36,4,11,8,"#fff");P(36,4,11,1,"#3c3f4b");P(36,11,11,1,"#3c3f4b");P(36,4,1,8,"#3c3f4b");P(46,4,1,8,"#3c3f4b");P(39,7,5,3,"#ff4d2e");P(40,8,3,1,"#fff");P(38,13,7,1,"#ff4d2e");for(let x=38;x<45;x+=2)P(x,14,1,4,"#f1f1f1")}
   if(kind==="crossfit"){P(1,36,10,10,"#b07a24");P(1,36,10,1,"#d9a03a");P(3,39,6,1,"#7a5230")}
   const Y=y=>y+dy;
+  if(typeof drawEquipBack==="function")drawEquipBack(P,cx,Y,kind,f);
   const longPants=kind==="kendo";
   const top=kind==="basketball"?"#ff8a3d":kind==="crossfit"?"#2fb487":kind==="running"?"#ffd166":kind==="kendo"?"#2d3a7a":kind==="pole"?"#ff86bd":C.tee;
   const bottom=kind==="kendo"?"#1c2350":C.shorts;
@@ -1611,6 +1667,7 @@ function drawHero(ctx,kind,f,bmi,crown){
     if(kind==="default"&&crown){P(cx-7,Y(3),14,3,"#ffe08a");for(let x=cx-7;x<cx+7;x+=4)P(x,Y(1),2,2,"#ffe08a");P(cx-5,Y(4),1,1,"#ff86bd");P(cx-1,Y(4),1,1,"#7ec8ff");P(cx+3,Y(4),1,1,"#ff86bd")}
     if(kind==="treadmill"||kind==="stairs"||kind==="rope"||kind==="running"||kind==="crossfit"||kind==="basketball"){P(cx+7,Y(13),1,2,"#7ec8ff");P(cx+8,Y(15),1,1,"#7ec8ff")}
   }
+  if(typeof drawEquip==="function")drawEquip(P,cx,Y,kind,f);
   if(kind==="rest"){const z=f?0:2;P(cx+10,Y(6)-z,3,1,"#6b4fd8");P(cx+12,Y(7)-z,1,1,"#6b4fd8");P(cx+11,Y(8)-z,1,1,"#6b4fd8");P(cx+10,Y(9)-z,3,1,"#6b4fd8")}
 }
 
