@@ -544,10 +544,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
   <div class="box">
     <h2>55kg 왕국으로 <span class="tag">BOSS</span></h2>
     <div class="map" id="map"></div>
-  </div>
-  <div class="box">
-    <h2>진행도</h2>
-    <div class="bar-row"><div class="lbl"><span id="journeyText"></span><span class="num" id="journeyPct"></span></div>
+    <div class="bar-row" style="margin-top:14px"><div class="lbl"><span id="journeyText"></span><span class="num" id="journeyPct"></span></div>
       <div class="bar"><i id="journeyBar" style="--c:var(--pink);width:0"></i></div></div>
     <div class="bar-row"><div class="lbl"><span id="bossHpText"></span><span class="num" id="bossHpNum"></span></div>
       <div class="bar"><i id="bossHp" style="--c:var(--red);width:0"></i></div></div>
@@ -1155,12 +1152,12 @@ function accSum(el,text){const bx=el&&el.closest(".box");if(!bx)return;const s=b
 /* ===== 설정·메인 퀘스트: 버튼을 눌러 한 칸씩 열기 ===== */
 function initSettingsTiles(){
   tileScreen("s-settings",null,-1);
-  tileScreen("s-quest",[["⚔️","보스 전투"],["📜","오늘의 퀘스트"],["🗺️","체중 지도"],["📈","진행도"]],0);
+  tileScreen("s-quest",[["⚔️","보스 전투"],["📜","오늘의 퀘스트"],["🗺️","체중 지도"]],0);
   tileScreen("s-closet",[["🛍️","상점"],["👗","운동 의상"]],0)}
 function tileScreen(id,labels,openIdx){const sec=$(id);if(!sec)return;
   const ICON={"화면 테마":"🎨","주간 운동 퀘스트":"⚔️","저장·동기화":"☁️","타이틀":"🏠","캐릭터·목표":"🧍","백업":"💾","처음부터 다시":"🗑️"};
   const boxes=[...sec.children].filter(el=>el.classList.contains("box"));
-  const nav=document.createElement("nav");nav.className="set-menu";nav.setAttribute("aria-label","항목");
+  const nav=document.createElement("nav");nav.className="set-menu";nav.setAttribute("aria-label","항목");nav.style.gridTemplateColumns=`repeat(${Math.min(4,boxes.length)},minmax(0,1fr))`;
   const hint=document.createElement("p");hint.className="small muted set-hint";hint.textContent="보고 싶은 항목을 눌러 주세요.";
   const btns=boxes.map((bx,i)=>{const h=bx.querySelector("h2");const name=labels&&labels[i]?labels[i][1]:(h?h.textContent.trim():"항목");const ic=labels&&labels[i]?labels[i][0]:(ICON[name]||"⚙️");
     bx.id=bx.id||id+"-box"+i;
