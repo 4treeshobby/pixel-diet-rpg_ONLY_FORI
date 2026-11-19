@@ -1457,7 +1457,7 @@ const QUICK=(function(){
   const KNUM={"한":1,"하나":1,"두":2,"둘":2,"세":3,"셋":3,"네":4,"넷":4,"다섯":5,"여섯":6,"일곱":7,"여덟":8,"아홉":9,"열":10};
   const UNIT_RE="(킬로그램|kg|킬로|grams|gram|그램|그람|g|G|mL|ml|cc|미리|밀리|리터|L|개|알|봉지|봉|포|컵|조각|토막|덩이|피스|마리|꼬치|잔|판|모|인분|공기|장|줄|캔|팩|병|통|쪽|접시|그릇|티스푼|작은스푼|작은술|큰스푼|밥스푼|큰술|밥숟가락|숟가락|숟갈|스푼|tbsp|tsp|ts|T|t)(?![a-zA-Z])";
   const MEALS=["아침","점심","저녁","간식","야식"];
-  const SYN=[[/백미밥|쌀밥|흰밥/g,"흰쌀밥"],[/계란/g,"달걀"],[/돈가스/g,"돈까스"]];
+  const SYN=[[/백미밥|쌀밥|흰밥/g,"흰쌀밥"],[/계란/g,"달걀"],[/돈가스/g,"돈까스"],[/열려라\s*참깨라면/g,"열참깨라면"]];
   const norm=s=>SYN.reduce((a,[r,t])=>a.replace(r,t),String(s).toLowerCase()).replace(/\(.*?\)/g,"").replace(/냉동|생(?=[가-힣])|햇반|국산|수제|촉촉|맛있는/g,"").replace(/[\s·.,\-_/&+()]/g,"");
   const bigrams=s=>{const a=[];for(let i=0;i<s.length-1;i++)a.push(s.slice(i,i+2));return a};
   function sim(a,b){if(!a||!b)return 0;if(a===b)return 1;
