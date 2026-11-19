@@ -285,6 +285,8 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .fold summary h2{margin:0}.fold summary::after{content:"▼";font-size:11px;color:var(--ink-dim)}.fold[open] summary::after{content:"▲"}.fold[open] summary{margin-bottom:10px}
 .log.adv li{grid-template-columns:78px 1fr auto;align-items:center}.ad-chips{display:flex;flex-wrap:wrap;gap:4px}
 .chip{font-size:12px;padding:2px 7px;border-radius:2px;background:var(--panel-2);border:1px solid var(--line);white-space:nowrap}.chip.ok{border-color:var(--mint)}.chip.bad{border-color:var(--red)}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tiles>span{display:grid;gap:4px;background:var(--panel-2);border-radius:2px;padding:10px 12px}.tiles small{font-size:12px;color:var(--ink-dim)}.tiles b{font-size:24px}
 </style>
 </head>
 <body>
@@ -461,7 +463,8 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <!-- ===== 능력치 ===== -->
 <section class="screen" id="s-stats" aria-label="능력치">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>능력치</h1><span class="tag" id="ibDate"></span></div>
-  <div class="box"><div class="stats" id="stats"></div></div>
+  <div class="box"><h2>체형</h2><div class="stats" id="statsBody"></div></div>
+  <div class="box"><h2>인바디 능력치</h2><div class="stats" id="stats"></div></div>
 </section>
 
 <!-- ===== 메인 퀘스트 ===== -->
@@ -470,7 +473,10 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
   <div class="box">
     <h2>55kg 왕국으로 <span class="tag">BOSS</span></h2>
     <div class="map" id="map"></div>
-    <div class="bar-row" style="margin-top:14px"><div class="lbl"><span id="journeyText"></span><span class="num" id="journeyPct"></span></div>
+  </div>
+  <div class="box">
+    <h2>진행도</h2>
+    <div class="bar-row"><div class="lbl"><span id="journeyText"></span><span class="num" id="journeyPct"></span></div>
       <div class="bar"><i id="journeyBar" style="--c:var(--pink);width:0"></i></div></div>
     <div class="bar-row"><div class="lbl"><span id="bossHpText"></span><span class="num" id="bossHpNum"></span></div>
       <div class="bar"><i id="bossHp" style="--c:var(--red);width:0"></i></div></div>
@@ -486,8 +492,11 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <div class="dnav"><button class="back" type="button" id="dPrev" aria-label="전날">◀</button><b id="dLabel"></b><button class="back" type="button" id="dNext" aria-label="다음날">▶</button><button class="btn alt sm" type="button" id="dToday" hidden>오늘</button></div>
     <div class="dsum" id="dSum"></div>
     <div class="dgrid"><div id="dKcal"></div><div class="waffle" id="dWaffle" aria-hidden="true"></div></div>
-    <div class="dgrid"><div id="dNut"></div><div class="donut" id="dDonut"></div></div>
-    <h3 class="dh">식단</h3><div class="meal" id="mealList"></div>
+    <div class="dgrid" style="border-bottom:0;padding-bottom:0"><div id="dNut"></div><div class="donut" id="dDonut"></div></div>
+  </div>
+  <div class="box">
+    <h2>식단 · 운동</h2>
+    <h3 class="dh" style="margin-top:0">식단</h3><div class="meal" id="mealList"></div>
     <h3 class="dh">운동</h3><div class="meal" id="dEx"></div>
     <a class="btn" href="#record" style="text-decoration:none;text-align:center;margin-top:14px;display:block">+ 기록하기</a>
   </div>
@@ -500,13 +509,12 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <h2><span id="weekTag"></span></h2>
     <p style="margin:0" id="weekStatus"></p>
     <div class="days" id="weekDays"></div>
-    <p class="muted small" style="margin:10px 0 0" id="weekRule"></p>
   </div>
   <div class="box">
     <h2>지난 기록</h2>
     <div class="weeks" id="weekHistory"></div>
-    <p class="small" style="margin:10px 0 0" id="fineText"></p>
   </div>
+  <div class="box"><h2>누적 결과</h2><p style="margin:0" id="fineText"></p><p class="muted small" style="margin:8px 0 0" id="weekRule"></p></div>
 </section>
 
 <!-- ===== 그래프 ===== -->
@@ -582,9 +590,9 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <div class="cal-head"><button class="back" type="button" id="calPrev" aria-label="이전 달">◀</button><h2 id="calTitle" style="margin:0"></h2><button class="back" type="button" id="calNext" aria-label="다음 달">▶</button></div>
     <div class="cal-dow" aria-hidden="true"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
     <div class="cal-grid" id="calGrid"></div>
-    <p class="small" id="calSum" style="margin:10px 0 4px"></p>
-    <p class="small muted cal-legend" style="margin:0"><span class="cdot ex hit"></span> 운동 완료 · <span class="cdot ex part"></span> 조금 함 · <span class="cdot dt ok"></span> 식단 목표 이하 · <span class="cdot dt over"></span> 초과 · <span class="cdot rest"></span> 회복 기간</p>
+    <p class="small muted cal-legend" style="margin:10px 0 0"><span class="cdot ex hit"></span> 운동 완료 · <span class="cdot ex part"></span> 조금 함 · <span class="cdot dt ok"></span> 식단 목표 이하 · <span class="cdot dt over"></span> 초과 · <span class="cdot rest"></span> 회복 기간</p>
   </div>
+  <div class="box"><h2>이번 달</h2><p style="margin:0" id="calSum"></p></div>
   <div class="box" id="calDetail"></div>
 </section>
 
@@ -708,7 +716,7 @@ function compute(D){
 /* ---------- render ---------- */
 function rebuild(){
   M=compute(merged());
-  renderHome();renderStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());renderQuestRules();
+  renderHome();renderStats();splitStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());renderQuestRules();
   weightChart(M.ib,M.S);kcalChart(M.days,M.T,M.S);exChart(M.weeks.slice(-8),M.S);
   drawAll();
   if(lastLevel!==null&&M.L>lastLevel){$("lvUpText").textContent="LV."+M.L+" "+M.title+"(이)가 되었어요!";$("lvUp").classList.add("on");$("lvUpOk").focus()}
@@ -853,7 +861,7 @@ function renderCalendar(info){
     cells+=`<button type="button" class="cd ${ds===tIso?"today":""} ${ds===CAL.sel?"sel":""} ${r.rest?"rest":""} ${future?"future":""}" data-d="${ds}" aria-label="${CAL.m+1}월 ${d}일${r.ex==="hit"?", 운동 완료":""}${r.diet==="ok"?", 식단 완료":""}">
       <span class="n num">${d}</span><span class="dots">${r.ex?`<i class="ex ${r.ex}"></i>`:""}${r.diet?`<i class="dt ${r.diet}"></i>`:""}</span></button>`}
   $("calGrid").innerHTML=cells;
-  $("calSum").innerHTML=`이번 달 운동 완료 <b class="num up">${exN}일</b> · 식단 완료 <b class="num" style="color:var(--gold)">${dietN}일</b>`;
+  $("calSum").innerHTML=`<span class="tiles"><span><small>🏃 운동 완료</small><b class="num up">${exN}일</b></span><span><small>🍙 식단 완료</small><b class="num" style="color:var(--gold)">${dietN}일</b></span></span>`;
   const sd=CAL.sel&&CAL.sel.slice(0,7)===`${CAL.y}-${String(CAL.m+1).padStart(2,"0")}`?CAL.sel:null;
   $("calDetail").innerHTML=sd?info(sd).html:'<p class="small muted" style="margin:0">날짜를 누르면 그날 기록을 보여줘요.</p>';
 }
@@ -1019,6 +1027,8 @@ function initDiary(re){
   $("dToday").addEventListener("click",()=>{DIARY.d=null;re()});
 }
 /* ===== 모험 일지: 날짜별 한 줄 ===== */
+function splitStats(){const b=$("statsBody"),s=$("stats");if(!b||!s)return;b.innerHTML="";[...s.children].forEach(el=>{const t=(el.querySelector(".ico")||{}).textContent;if(t==="HP"||t==="BMI")b.appendChild(el)});
+  b.closest(".box").hidden=!b.children.length}
 function renderAdv(rows){
   // rows: [{d, ex:"폴댄스 30분"|null, exOk, kcal|null, kOk, w|null, xp}]
   $("advLog").innerHTML=rows.slice(0,12).map(r=>`<li><span class="ad-d num">${mdw(parse(r.d))}</span><span class="ad-chips">${r.ex?`<span class="chip ${r.exOk?"ok":""}">🏃 ${esc(r.ex)}</span>`:""}${r.kcal!=null?`<span class="chip ${r.kOk?"ok":"bad"}">🍙 ${fmt(r.kcal)}kcal</span>`:""}${r.w!=null?`<span class="chip">⚖️ ${r.w}kg</span>`:""}</span><span class="xp">+${r.xp}</span></li>`).join("")||'<li class="muted">아직 기록이 없어요.</li>';
