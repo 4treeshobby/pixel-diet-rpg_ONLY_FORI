@@ -327,6 +327,12 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 
 .cal-ex{margin:0 0 8px}.cal-exh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
 .cal-ex .burn{color:#ff9f43;font-size:16px}.cal-exr{display:flex;justify-content:space-between;font-size:13px;padding:3px 0 3px 20px;border-bottom:1px dashed var(--line)}
+
+/* 골드·보스·일일 퀘스트 */
+.gold-chip{font-size:12px;background:var(--gold);color:#2b2850;border:2px solid #0f0e1f;border-radius:2px;padding:0 6px;margin-left:6px;white-space:nowrap}
+.boss-row{display:flex;gap:12px;align-items:center}.boss-cv{width:72px;height:72px;image-rendering:pixelated;flex:none}.boss-info{flex:1;display:grid;gap:4px;min-width:0}
+.dq{list-style:none;margin:0;padding:0;display:grid;gap:4px}.dq li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;padding:6px 8px;background:var(--panel-2);border-radius:2px}
+.dq li.ok{outline:2px solid var(--mint);outline-offset:-2px}.dq .num{font-size:12px;color:var(--ink-dim);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -351,7 +357,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <div class="hud">
       <span class="lv num" id="hLv">LV.1</span>
       <div>
-        <div class="bar-row" style="margin:0"><div class="lbl"><span id="hTitle"></span><span class="num" id="hXp"></span></div>
+        <div class="bar-row" style="margin:0"><div class="lbl"><span><span id="hTitle"></span><span class="gold-chip num" id="hGold">💰 0G</span></span><span class="num" id="hXp"></span></div>
         <div class="bar"><i id="hXpBar" style="width:0"></i></div></div>
       </div>
     </div>
@@ -510,6 +516,8 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <!-- ===== 메인 퀘스트 ===== -->
 <section class="screen" id="s-quest" aria-label="메인 퀘스트">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>메인 퀘스트</h1></div>
+  <div class="box"><h2>⚔️ 보스 전투</h2><div id="bossBox"></div></div>
+  <div class="box"><h2>📜 오늘의 퀘스트</h2><ul class="dq" id="dqList"></ul><p class="small" id="dqSum" style="margin:8px 0 0"></p></div>
   <div class="box">
     <h2>55kg 왕국으로 <span class="tag">BOSS</span></h2>
     <div class="map" id="map"></div>
@@ -756,7 +764,7 @@ function compute(D){
 /* ---------- render ---------- */
 function rebuild(){
   M=compute(merged());
-  renderHome();renderStats();splitStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());renderQuestRules();
+  renderHome();renderStats();splitStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());renderGame({key:"fori",T:M.T,days:M.days,ex:M.ex,wDates:new Set(M.ib.map(x=>iso(x.d))),kOk:k=>k<=M.tol,naGoal:M.S.naGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,weeks:M.weeks});renderQuestRules();
   weightChart(M.ib,M.S);kcalChart(M.days,M.T,M.S);exChart(M.weeks.slice(-8),M.S);
   drawAll();
   if(lastLevel!==null&&M.L>lastLevel){$("lvUpText").textContent="LV."+M.L+" "+M.title+"(이)가 되었어요!";$("lvUp").classList.add("on");$("lvUpOk").focus()}
@@ -1084,8 +1092,8 @@ function renderAdv(rows){
 const ACC_WIDE=window.matchMedia?window.matchMedia("(min-width:900px)"):{matches:false,addEventListener(){}};
 function initAccordion(){
   const SKIP=["s-title","s-setup","s-home","s-record","s-settings"];
-  const MODE={"s-quest":"none","s-week":"none","s-today":"single","s-charts":"single"};
-  const OPEN={"s-calendar":[0,1],"s-stats":[0,1]};
+  const MODE={"s-week":"none","s-today":"single","s-charts":"single"};
+  const OPEN={"s-calendar":[0,1],"s-stats":[0,1],"s-quest":[0,1,2,3]};
   document.querySelectorAll("section.screen").forEach(sec=>{
     const mode=MODE[sec.id]||"multi";
     if(SKIP.includes(sec.id)||mode==="none")return;
@@ -1124,6 +1132,40 @@ function initSettingsTiles(){const sec=$("s-settings");if(!sec)return;
     nav.appendChild(b)});
   const hint=document.createElement("p");hint.className="small muted set-hint";hint.textContent="바꾸고 싶은 항목을 눌러 주세요.";
   sec.querySelector(".topbar").after(nav,hint)}
+
+/* ===== 일일 퀘스트 · 골드 · 보스 전투 ===== */
+const DQ=[["diet","🍙","식단 목표 지키기",30,10],["ex","🏃","운동 퀘스트 시간 채우기",40,15],["na","🧂","나트륨 기준 지키기",10,3],["w","⚖️","체중·인바디 기록",20,5]];
+const DQ_BONUS=[30,10],WEEK_REWARD=[100,50];
+const BOSS_POOL=[["떡볶이 슬라임","slime"],["라면 골렘","golem"],["치킨 드래곤","dragon"],["케이크 마녀","witch"],["야식 리치","lich"],["마라탕 오우거","golem"],["탕후루 기사","dragon"],["피자 거인","slime"],["요요 대마왕","king"]];
+const bossHp=i=>150+i*50;
+function gameCalc(X){
+  // X: {T, days:{iso:{kcal,na,pending}}, ex:{iso:{min}}, wDates:Set, kOk(k), naGoal, minFor(iso), weeks:[{ok,current}]}
+  const tIso=iso(X.T);const keys=new Set([...Object.keys(X.days),...Object.keys(X.ex),...X.wDates].filter(d=>d<=tIso));
+  const dayQ=ds=>{const d=X.days[ds],e=X.ex[ds];const done={diet:!!(d&&!d.pending&&X.kOk(d.kcal)),ex:!!(e&&e.min>=X.minFor(ds)),na:!!(d&&d.na<=X.naGoal),w:X.wDates.has(ds)};
+    let g=0,dmg=0;DQ.forEach(q=>{if(done[q[0]]){g+=q[3];dmg+=q[4]}});const all=done.diet&&done.ex&&done.na;if(all){g+=DQ_BONUS[0];dmg+=DQ_BONUS[1]}return{done,all,g,dmg}};
+  let gold=0,dmg=0;keys.forEach(ds=>{const q=dayQ(ds);gold+=q.g;dmg+=q.dmg});
+  const wk=X.weeks.filter(w=>w.ok&&!w.current).length;gold+=wk*WEEK_REWARD[0];dmg+=wk*WEEK_REWARD[1];
+  let i=0,left=dmg;while(left>=bossHp(i)){left-=bossHp(i);gold+=100*(i+1);i++}
+  const b=BOSS_POOL[i%BOSS_POOL.length];
+  return{gold,dmg,today:dayQ(tIso),killed:i,boss:{name:b[0]+(i>=BOSS_POOL.length?" +"+Math.floor(i/BOSS_POOL.length):""),type:b[1],hp:bossHp(i),left:bossHp(i)-left},weeksDone:wk}}
+function renderGame(X){
+  const G=gameCalc(X);
+  if($("hGold"))$("hGold").textContent="💰 "+fmt(G.gold)+"G";
+  if($("bossBox")){const b=G.boss,pct=b.left/b.hp;
+    $("bossBox").innerHTML=`<div class="boss-row"><canvas width="16" height="16" class="boss-cv" data-boss="${b.type}" data-state="now" aria-hidden="true"></canvas>
+      <div class="boss-info"><b>${esc(b.name)}</b><span class="small muted">처치한 보스 ${G.killed}마리 · 누적 데미지 ${fmt(G.dmg)}</span>
+      <div class="bar" style="height:14px"><i style="--c:var(--red);width:${(pct*100).toFixed(1)}%"></i></div><span class="small"><b class="num">${fmt(b.left)}</b> / ${fmt(b.hp)} HP</span></div></div>
+      <p class="small muted" style="margin:8px 0 0">오늘의 퀘스트를 깰 때마다 데미지가 들어가요. 처치하면 보너스 골드!</p>`;
+    document.querySelectorAll(".boss-cv").forEach(c=>drawBoss(c,c.dataset.boss,"now"))}
+  if($("dqList")){const t=G.today;
+    $("dqList").innerHTML=DQ.map(q=>`<li class="${t.done[q[0]]?"ok":""}"><span>${t.done[q[0]]?"✅":"⬜"} ${q[1]} ${q[2]}</span><span class="num">+${q[3]}G · ⚔️${q[4]}</span></li>`).join("")+
+      `<li class="${t.all?"ok":""} bonus"><span>${t.all?"🎉":"⬜"} 식단·운동·나트륨 모두 달성 보너스</span><span class="num">+${DQ_BONUS[0]}G · ⚔️${DQ_BONUS[1]}</span></li>`;
+    $("dqSum").innerHTML=`오늘 <b class="num" style="color:var(--gold)">+${fmt(t.g)}G</b> · 보스에게 <b class="num down">${t.dmg}</b> 데미지 <span class="muted small">(주간 퀘스트 달성 시 +${WEEK_REWARD[0]}G · ⚔️${WEEK_REWARD[1]})</span>`}
+  // 처치 알림
+  let prev=null;try{prev=localStorage.getItem("dietrpg.kills."+(X.key||""))}catch(e){}
+  if(prev!==null&&G.killed>+prev)toast(`⚔️ 보스 ${G.killed-(+prev)}마리 처치! 보너스 골드 획득`);
+  try{localStorage.setItem("dietrpg.kills."+(X.key||""),String(G.killed))}catch(e){}
+  return G}
 
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
