@@ -268,6 +268,23 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .fairy-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .fairy-list li{display:grid;grid-template-columns:auto 1fr;gap:6px;font-size:14px;line-height:1.45;padding:7px 9px;background:var(--panel-2);border-radius:2px}
 @media (min-width:720px){#s-home>.fairy-line{grid-column:2}#s-home .stage{grid-row:2/span 4}}
+
+/* 식단 상세 (FatSecret 스타일) */
+.dnav{display:flex;align-items:center;gap:8px;margin-bottom:10px}.dnav b{flex:1;text-align:center;font-size:17px}.dnav .back{padding:4px 12px}.dnav .back:disabled{opacity:.35}
+.dsum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));text-align:right;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 2px}
+.dsum div{display:grid;gap:2px}.dsum span{font-size:12px;color:var(--ink-dim)}.dsum b{font-size:16px}.dsum .hl b{text-decoration:underline;text-underline-offset:4px}
+.dgrid{display:grid;grid-template-columns:minmax(0,1fr) 116px;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:15px;padding:2px 0}.kv b small{font-size:11px;color:var(--ink-dim);font-weight:400}
+.kv.kvs{color:var(--ink-dim);font-size:13px;border-top:1px solid var(--line);margin-top:4px;padding-top:5px}
+.waffle{display:grid;grid-template-columns:repeat(10,1fr);gap:2px}.waffle i{aspect-ratio:1;background:var(--line);border-radius:1px}.waffle i.y{background:var(--mint)}.waffle i.o{background:var(--red)}
+.donut{display:grid;justify-items:center;gap:6px}.donut svg{width:92px;height:92px}
+.donut ul{list-style:none;margin:0;padding:0;font-size:12px;display:grid;gap:2px;width:100%}.donut li{display:grid;grid-template-columns:1fr auto 10px;gap:6px;align-items:center}.donut li i{width:10px;height:10px;border-radius:50%}
+.dh{font-size:14px;margin:14px 0 6px;color:var(--ink-dim)}
+/* 모험 일지 */
+.fold summary{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;list-style:none}.fold summary::-webkit-details-marker{display:none}
+.fold summary h2{margin:0}.fold summary::after{content:"▼";font-size:11px;color:var(--ink-dim)}.fold[open] summary::after{content:"▲"}.fold[open] summary{margin-bottom:10px}
+.log.adv li{grid-template-columns:78px 1fr auto;align-items:center}.ad-chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:12px;padding:2px 7px;border-radius:2px;background:var(--panel-2);border:1px solid var(--line);white-space:nowrap}.chip.ok{border-color:var(--mint)}.chip.bad{border-color:var(--red)}
 </style>
 </head>
 <body>
@@ -465,13 +482,14 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <section class="screen" id="s-today" aria-label="오늘의 연료">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>오늘의 연료</h1><span class="tag" id="todayTag"></span></div>
   <div class="box" id="fairyBox"></div>
-  <div class="box">
-    <div class="bar-row"><div class="lbl"><span>칼로리</span><span class="num" id="kcalText"></span></div>
-      <div class="bar"><i id="kcalBar" style="--c:var(--mint);width:0"></i></div></div>
-    <div class="bar-row"><div class="lbl"><span>나트륨</span><span class="num" id="naText"></span></div>
-      <div class="bar"><i id="naBar" style="--c:var(--gold);width:0"></i></div></div>
-    <div class="meal" id="mealList"></div>
-    <a class="btn" href="#record" style="text-decoration:none;text-align:center;margin-top:14px;display:block">+ 오늘 먹은 것 기록하기</a>
+  <div class="box diary">
+    <div class="dnav"><button class="back" type="button" id="dPrev" aria-label="전날">◀</button><b id="dLabel"></b><button class="back" type="button" id="dNext" aria-label="다음날">▶</button><button class="btn alt sm" type="button" id="dToday" hidden>오늘</button></div>
+    <div class="dsum" id="dSum"></div>
+    <div class="dgrid"><div id="dKcal"></div><div class="waffle" id="dWaffle" aria-hidden="true"></div></div>
+    <div class="dgrid"><div id="dNut"></div><div class="donut" id="dDonut"></div></div>
+    <h3 class="dh">식단</h3><div class="meal" id="mealList"></div>
+    <h3 class="dh">운동</h3><div class="meal" id="dEx"></div>
+    <a class="btn" href="#record" style="text-decoration:none;text-align:center;margin-top:14px;display:block">+ 기록하기</a>
   </div>
 </section>
 
@@ -519,8 +537,8 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <!-- ===== 모험 일지 ===== -->
 <section class="screen" id="s-journal" aria-label="모험 일지">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>모험 일지</h1></div>
-  <div class="box"><h2>경험치 내역</h2><ul class="log" id="xpLog"></ul></div>
-  <div class="box"><h2>최근 모험</h2><ul class="log" id="advLog"></ul></div>
+  <div class="box"><h2>최근 모험</h2><ul class="log adv" id="advLog"></ul></div>
+  <details class="box fold"><summary><h2>경험치 내역</h2><span class="small muted" id="xpSum"></span></summary><ul class="log" id="xpLog"></ul></details>
   <footer>데이터: 식단 칼로리 계산표 + 이 페이지에서 넣은 기록</footer>
 </section>
 
@@ -645,7 +663,7 @@ function compute(D){
   const days={};
   D.meals.forEach(r=>{const [d,meal,name,q,u,k,na,pend]=r;(days[d]=days[d]||{kcal:0,na:0,items:[],pending:0});days[d].kcal+=k;days[d].na+=na;if(pend)days[d].pending++;days[d].items.push({meal,name,q,u,k,na,pend})});
   const ex={};
-  D.workouts.forEach(r=>{const [d,cat,name,min]=r;const e=(ex[d]=ex[d]||{min:0,kinds:new Set(),items:[]});if(min)e.min+=Number(min);e.kinds.add(kindOf(name,cat));e.items.push({cat,name,min})});
+  D.workouts.forEach(r=>{const [d,cat,name,min,sets,wt,reps,setting]=r;const e=(ex[d]=ex[d]||{min:0,kinds:new Set(),items:[]});if(min)e.min+=Number(min);e.kinds.add(kindOf(name,cat));e.items.push({cat,name,min,setting})});
   const cond=D.condition.map(c=>({s:parse(c[0]),e:parse(c[1]),t:c[2]}));
   const inRest=d=>cond.some(c=>d>=c.s&&d<=c.e);
   const ib=D.inbody.map(r=>({d:new Date(r[0]),w:r[1],smm:r[2],pbf:r[3],fat:r[4],bmr:r[5],vis:r[6],score:r[7]}));
@@ -739,14 +757,9 @@ function renderQuest(){
   else{$("bossHpText").textContent="모든 보스를 처치했어요!";$("bossHpNum").textContent="";$("bossHp").style.width="0"}
 }
 function renderToday(){
-  const {days,tIso,T,S}=M;const td=days[tIso];$("todayTag").textContent=mdw(T);
-  const kc=td?td.kcal:0,na=td?td.na:0;
-  $("kcalText").textContent=fmt(kc)+" / "+fmt(S.kcalGoal)+"kcal · 남은 "+fmt(S.kcalGoal-kc);
-  $("kcalBar").style.width=Math.min(100,kc/S.kcalGoal*100).toFixed(1)+"%";$("kcalBar").style.setProperty("--c",kc>S.kcalGoal?"var(--red)":"var(--mint)");
-  $("naText").textContent=fmt(na)+" / "+fmt(S.naGoal)+"mg";$("naBar").style.width=Math.min(100,na/S.naGoal*100).toFixed(1)+"%";
-  if(td){$("mealList").innerHTML=["아침","점심","저녁","간식"].filter(m=>td.items.some(i=>i.meal===m)).map(m=>{const its=td.items.filter(i=>i.meal===m);
-      return`<div class="meal-row"><b>${m}</b><span>${its.map(i=>esc(i.name)+(i.pend?' <span class="pill wait">계산 대기</span>':"")).join(", ")}</span><span class="num">${fmt(its.reduce((a,i)=>a+i.k,0))}</span></div>`}).join("")}
-  else $("mealList").innerHTML='<p class="muted small" style="margin:0">오늘은 아직 기록이 없어요.</p>';
+  const {days,T,S,ib}=M;$("todayTag").textContent=mdw(T);
+  renderDiary({T,goal:S.kcalGoal,naGoal:S.naGoal,w:ib.length?ib[ib.length-1].w:S.startWeight,
+    dayOf:d=>days[d]?{items:days[d].items.map(i=>({meal:i.meal,name:i.name,kcal:i.k,na:i.na,pend:i.pend}))}:null,exOf:d=>M.ex[d]?M.ex[d].items:[]});
 }
 function renderWeek(){
   const {weeks,ex,S,T,tIso}=M;
@@ -779,14 +792,14 @@ function renderBadges(){
     return`<div class="badge ${ok?"":"locked"}"><div class="b-ico" aria-hidden="true">${b[0]}</div><div><h3>${b[1]}</h3><p>${b[2]}${ok?" · 획득":""}</p>${ok||b[4]===1?"":`<div class="bar"><i style="--c:var(--mint);width:${(p*100).toFixed(0)}%"></i></div><p class="num">${(Math.round(b[3]*10)/10).toLocaleString("ko-KR")} / ${b[4].toLocaleString("ko-KR")}</p>`}</div></div>`}).join("");
 }
 function renderJournal(){
-  const {xpParts,xp,span,into,ex,ib,completedDays,days,tol}=M;
-  $("xpLog").innerHTML=xpParts.map(p=>`<li><span class="muted">${p[1]}</span><span>${p[0]}</span><span class="xp">+${fmt(p[2])}</span></li>`).join("")+`<li><span class="muted">합계</span><span>다음 레벨까지 ${fmt(span-into)} XP</span><span class="xp">${fmt(xp)}</span></li>`;
-  const ev=[];
-  Object.keys(ex).forEach(d=>{const e=ex[d];const n=[...new Set(e.items.filter(i=>i.min).map(i=>i.name))].join(" + ");ev.push([d,`${esc(n||"운동")} ${e.min}분`,e.min>=30?"+30":"+0"])});
-  ib.forEach(r=>ev.push([iso(r.d),`인바디 ${r.w}kg · 골격근 ${r.smm}kg · 체지방 ${r.pbf}%`,"+20"]));
-  completedDays.forEach(d=>{const k=days[d].kcal;ev.push([d,`식단 ${fmt(k)}kcal ${k<=tol?"목표 달성":"목표 초과"}`,k<=tol?"+30":"+10"])});
-  ev.sort((a,b)=>b[0].localeCompare(a[0]));
-  $("advLog").innerHTML=ev.slice(0,15).map(e=>`<li><span class="muted num">${mdw(parse(e[0]))}</span><span>${e[1]}</span><span class="xp">${e[2]}</span></li>`).join("");
+  const {xpParts,xp,span,into,ex,ib,completedDays,days,tol,S}=M;
+  $("xpSum").textContent=`총 ${fmt(xp)} XP · 다음 레벨까지 ${fmt(span-into)}`;
+  $("xpLog").innerHTML=xpParts.map(p=>`<li><span class="muted">${p[1]}</span><span>${p[0]}</span><span class="xp">+${fmt(p[2])}</span></li>`).join("");
+  const by={};const g=d=>by[d]=by[d]||{d,ex:null,exOk:false,kcal:null,kOk:false,w:null,xp:0};
+  Object.keys(ex).forEach(d=>{const e=ex[d],r=g(d);const n=[...new Set(e.items.filter(i=>i.min).map(i=>i.name))];r.ex=(n.length>1?n[0]+" 외 "+(n.length-1):n[0]||"운동")+" "+e.min+"분";r.exOk=e.min>=S.quest.minMinutes;if(r.exOk)r.xp+=30});
+  ib.forEach(x=>{const r=g(iso(x.d));r.w=x.w;r.xp+=20});
+  completedDays.forEach(d=>{const r=g(d);r.kcal=days[d].kcal;r.kOk=r.kcal<=tol;r.xp+=10+(r.kOk?20:0)});
+  renderAdv(Object.values(by).sort((a,b)=>b.d.localeCompare(a.d)));
 }
 function renderCloset(){
   const cur=dressOverride||M.auto;
@@ -812,7 +825,7 @@ function renderSync(){const n=lget().length;if(!$("syncState"))return;
   if(dbCol&&n){$("dbNote").hidden=false;$("dbNote").textContent=`이 기기에만 저장된 기록이 ${n}개 있어요. 설정 › 저장·동기화에서 올려 주세요.`}}
 const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s.replace(/\s+/g,""))));
 function renderFoods(){
-  foodMap=new Map();M.D.foods.forEach(f=>foodMap.set(f[0],{unit:f[1],kcal:f[2],na:f[3],g:f[4]||null}));
+  foodMap=new Map();M.D.foods.forEach(f=>foodMap.set(f[0],{unit:f[1],kcal:f[2],na:f[3],g:f[4]||null,c:f[5],p:f[6],f:f[7]}));
   $("foodList").innerHTML=[...foodMap.keys()].sort((a,b)=>a.localeCompare(b,"ko")).map(n=>`<option value="${esc(n)}"></option>`).join("");
   updatePreview();
 }
@@ -932,6 +945,85 @@ function renderFairy(X){const r=fairyAdvice(X);const ico={red:"🔴",yel:"🟡",
 function fairyX(){const S=M.S;const days={};Object.entries(M.days).forEach(([d,v])=>days[d]={kcal:v.kcal,na:v.na,pending:v.pending>0,items:v.items.map(i=>({meal:i.meal,kcal:i.k}))});
   const tw=M.weeks.find(w=>w.current);
   return{T:M.T,now:new Date(),goal:S.kcalGoal,na:S.naGoal,mode:"max",kOk:k=>k<=M.tol,days,weights:M.ib.map(x=>({d:x.d,w:x.w})),week:{hit:tw?tw.hit:0,days:S.quest.days},dir:-1}}
+/* ===== 운동 소모 칼로리 DB (MET) ===== */
+// kcal = MET × 체중(kg) × 시간(h). 트레드밀은 경사·속도가 있으면 ACSM 걷기/달리기 공식으로 계산
+const EXDB=[
+  [/트레드밀|러닝머신|런닝머신/,"트레드밀 (경사 걷기)",6.0],
+  [/천국|계단|스텝밀/,"천국의계단",9.0],
+  [/줄넘기/,"줄넘기",11.8],
+  [/사이클|자전거|스피닝/,"실내 사이클 (보통)",7.0],
+  [/러닝|런닝|조깅|달리기|마라톤/,"러닝 (시속 8km)",8.3],
+  [/걷기|산책|워킹/,"걷기 (보통)",3.5],
+  [/등산|하이킹/,"등산",6.0],
+  [/수영/,"수영 (보통)",6.0],
+  [/검도|태권도|주짓수|유도|무술/,"검도·무술",10.3],
+  [/복싱|킥복싱/,"복싱",7.8],
+  [/크로스핏|crossfit|와드|wod|서킷/i,"크로스핏·서킷",8.0],
+  [/농구/,"농구",6.5],[/축구|풋살/,"축구",7.0],[/배드민턴/,"배드민턴",5.5],[/테니스/,"테니스",7.3],[/골프/,"골프",4.8],
+  [/클라이밍|암벽/,"클라이밍",8.0],
+  [/폴댄스|폴/,"폴댄스",5.0],[/댄스|줌바|에어로빅/,"댄스·줌바",6.5],
+  [/요가/,"요가",2.5],[/필라테스/,"필라테스",3.0],[/스트레칭/,"스트레칭",2.3],
+  [/기초|맨몸|홈트|플랭크|버피/,"기초 근력·맨몸 운동",3.8],
+  [/헬스|근력|웨이트|머신|덤벨|바벨|스쿼트|데드|프레스|컬|로우|풀업|덕션|익스텐션/,"헬스 (근력)",5.0]];
+function metOf(name,setting,cat){
+  const s=String(setting||"");const g=s.match(/경사\s*([\d.]+)/),v=s.match(/(?:시속|속도)\s*([\d.]+)/);
+  if(/트레드밀|러닝머신|런닝머신|걷기|러닝|조깅/.test(name)&&v){const S=+v[1]*1000/60,G=g?+g[1]/100:0;
+    const run=+v[1]>=8;const vo2=run?0.2*S+0.9*S*G+3.5:0.1*S+1.8*S*G+3.5;return{met:vo2/3.5,label:(run?"러닝":"걷기")+" 시속 "+v[1]+(g?" · 경사 "+g[1]+"%":"")}}
+  const r=EXDB.find(e=>e[0].test(name));if(r)return{met:r[2],label:r[1]};
+  return{met:cat==="근력"?5.0:cat==="유산소"?6.0:4.0,label:"기타 운동"}}
+function burnOf(item,w){if(!item.min||!w)return 0;return Math.round(metOf(item.name,item.setting,item.cat).met*w*item.min/60)}
+/* ===== 영양 (탄단지) ===== */
+function macroOf(name,kcal){const f=foodMap.get(name);if(!f||f.c==null||!f.kcal)return null;const r=kcal/f.kcal;return{c:f.c*r,p:f.p*r,f:f.f*r}}
+/* ===== 식단 상세 (FatSecret 스타일) ===== */
+const DIARY={d:null};
+function renderDiary(o){
+  // o: {T, goal, naGoal, w, dayOf(iso)->{items:[{meal,name,kcal,na,pend}]}|null, exOf(iso)->[{name,min,setting,cat}]}
+  const tIso=iso(o.T);if(!DIARY.d||DIARY.d>tIso)DIARY.d=tIso;const ds=DIARY.d;
+  $("dLabel").textContent=(ds===tIso?"오늘 · ":"")+mdw(parse(ds));$("dNext").disabled=ds>=tIso;$("dToday").hidden=ds===tIso;
+  const day=o.dayOf(ds),items=day?day.items:[];
+  let kc=0,na=0,c=0,p=0,fa=0,unk=0;
+  items.forEach(i=>{kc+=i.kcal||0;na+=i.na||0;const m=macroOf(i.name,i.kcal||0);if(m){c+=m.c;p+=m.p;fa+=m.f}else if(i.kcal)unk++});
+  const exs=(o.exOf(ds)||[]).filter(e=>e.min).map(e=>Object.assign({},e,{burn:burnOf(e,o.w),info:metOf(e.name,e.setting,e.cat)}));
+  const burn=exs.reduce((a,e)=>a+e.burn,0);
+  const pct=o.goal?kc/o.goal:0,left=o.goal-kc;
+  const f1=n=>(Math.round(n*10)/10).toLocaleString("ko-KR");
+  $("dSum").innerHTML=[["탄수",f1(c)],["단백질",f1(p)],["지방",f1(fa)],["목표",Math.round(pct*100)+"%"],["칼로리",fmt(kc)]].map((x,i)=>`<div class="${i===4?"hl":""}"><span>${x[0]}</span><b class="num">${x[1]}</b></div>`).join("");
+  // 와플 100칸
+  const fill=Math.min(100,Math.round(pct*100)),over=pct>1.02;
+  $("dWaffle").innerHTML=[...Array(100)].map((_,i)=>`<i class="${i>=100-fill?(over?"o":"y"):""}"></i>`).join("");
+  $("dKcal").innerHTML=`<div class="kv"><span>남은 칼로리</span><b class="num ${left<0?"down":""}">${fmt(left)}</b></div>
+    <div class="kv"><span>섭취한 칼로리</span><b class="num">${fmt(kc)}</b></div>
+    <div class="kv"><span>운동 소모 (추정)</span><b class="num up">${burn?"−"+fmt(burn):"0"}</b></div>
+    <div class="kv kvs"><span>칼로리 목표의 ${Math.round(pct*100)}%</span><span class="num">${fmt(o.goal)}</span></div>
+    ${burn?`<div class="kv kvs"><span>순 섭취 (섭취 − 운동)</span><span class="num">${fmt(kc-burn)}</span></div>`:""}`;
+  // 영양 + 도넛
+  const kcC=c*4,kcP=p*4,kcF=fa*9,tot=kcC+kcP+kcF;
+  const pc=tot?[kcC/tot,kcF/tot,kcP/tot]:[0,0,0];
+  $("dNut").innerHTML=`<div class="kv"><span>탄수화물</span><b class="num">${f1(c)}g</b></div><div class="kv"><span>단백질</span><b class="num">${f1(p)}g</b></div><div class="kv"><span>지방</span><b class="num">${f1(fa)}g</b></div>
+    <div class="kv"><span>나트륨</span><b class="num ${na>o.naGoal?"down":""}">${fmt(na)}<small>/${fmt(o.naGoal)}mg</small></b></div>
+    ${unk?`<p class="small muted" style="margin:4px 0 0">영양성분 모르는 음식 ${unk}개는 탄단지에서 빠졌어요</p>`:""}`;
+  const R=15.9155,C=["#7ec8e3","#f6c445","#f08a80"];let acc=0;
+  const segs=tot?pc.map((v,i)=>{const s=`<circle r="${R}" cx="21" cy="21" fill="none" stroke="${C[i]}" stroke-width="9" stroke-dasharray="${(v*100).toFixed(2)} ${(100-v*100).toFixed(2)}" stroke-dashoffset="${(25-acc).toFixed(2)}"/>`;acc+=v*100;return s}).join(""):`<circle r="${R}" cx="21" cy="21" fill="none" stroke="var(--line)" stroke-width="9"/>`;
+  $("dDonut").innerHTML=`<svg viewBox="0 0 42 42" role="img" aria-label="탄수 ${Math.round(pc[0]*100)}%, 지방 ${Math.round(pc[1]*100)}%, 단백질 ${Math.round(pc[2]*100)}%">${segs}</svg>
+    <ul>${["탄수","지방","단백질"].map((n,i)=>`<li><span>${n}</span><b class="num">${Math.round(pc[i]*100)}%</b><i style="background:${C[i]}"></i></li>`).join("")}</ul>`;
+  // 끼니
+  $("mealList").innerHTML=items.length?["아침","점심","저녁","간식"].filter(m=>items.some(i=>i.meal===m)).map(m=>{const its=items.filter(i=>i.meal===m);
+      return`<div class="meal-row"><b>${m}</b><span>${its.map(i=>esc(i.name)+(i.pend?' <span class="pill wait">계산 대기</span>':"")).join(", ")}</span><span class="num">${fmt(its.reduce((a,i)=>a+(i.kcal||0),0))}</span></div>`}).join("")
+    :'<p class="muted small" style="margin:0">이 날은 식단 기록이 없어요.</p>';
+  $("dEx").innerHTML=exs.length?exs.map(e=>`<div class="meal-row"><b>🏃</b><span>${esc(e.name)} ${e.min}분 <span class="muted small">· ${esc(e.info.label)}</span></span><span class="num up">−${fmt(e.burn)}</span></div>`).join("")+`<p class="small muted" style="margin:6px 0 0">체중 ${o.w}kg 기준 추정치예요.</p>`
+    :'<p class="muted small" style="margin:0">이 날은 운동 기록이 없어요.</p>';
+}
+function initDiary(re){
+  $("dPrev").addEventListener("click",()=>{DIARY.d=iso(addD(parse(DIARY.d),-1));re()});
+  $("dNext").addEventListener("click",()=>{DIARY.d=iso(addD(parse(DIARY.d),1));re()});
+  $("dToday").addEventListener("click",()=>{DIARY.d=null;re()});
+}
+/* ===== 모험 일지: 날짜별 한 줄 ===== */
+function renderAdv(rows){
+  // rows: [{d, ex:"폴댄스 30분"|null, exOk, kcal|null, kOk, w|null, xp}]
+  $("advLog").innerHTML=rows.slice(0,12).map(r=>`<li><span class="ad-d num">${mdw(parse(r.d))}</span><span class="ad-chips">${r.ex?`<span class="chip ${r.exOk?"ok":""}">🏃 ${esc(r.ex)}</span>`:""}${r.kcal!=null?`<span class="chip ${r.kOk?"ok":"bad"}">🍙 ${fmt(r.kcal)}kcal</span>`:""}${r.w!=null?`<span class="chip">⚖️ ${r.w}kg</span>`:""}</span><span class="xp">+${r.xp}</span></li>`).join("")||'<li class="muted">아직 기록이 없어요.</li>';
+}
+
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
 function entPickState(){const all=[...document.querySelectorAll("#entries .pick")],on=all.filter(c=>c.checked);
@@ -982,7 +1074,7 @@ function initForms(){
   $("closet").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b||b.disabled)return;dressOverride=b.dataset.k===M.auto?null:b.dataset.k;renderCloset();renderHome();drawAll();toast("마을에서 입어볼 수 있어요")});
   $("autoDress").addEventListener("click",()=>{dressOverride=null;renderCloset();renderHome();drawAll()});
   $("lvUpOk").addEventListener("click",()=>$("lvUp").classList.remove("on"));
-  initCalendar(calInfo);
+  initCalendar(calInfo);initDiary(()=>renderToday());
   ["qrMin","qrDays","qrFine","qrFrom"].forEach(id=>$(id).addEventListener("input",()=>$("qrMin").dataset.touched=1));
   $("fQuest").addEventListener("submit",async e=>{e.preventDefault();if(!col)return;
     const n=id=>parseInt($(id).value,10);const doc={type:"quest",from:iso(monday(parse($("qrFrom").value||iso(today())))),minMinutes:n("qrMin"),days:n("qrDays"),fine:n("qrFine")||0};
