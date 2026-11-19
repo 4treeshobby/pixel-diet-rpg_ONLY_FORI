@@ -310,6 +310,12 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .acc .box>h2.acc-h{overflow:hidden}
 .acc-t{flex:none;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .acc-s{flex:1 1 auto}
+
+/* 주간 기록: 한 줄씩 */
+.weeks.rows{display:grid;grid-template-columns:1fr;gap:4px;margin-top:0}
+.wkr{display:grid;grid-template-columns:62px 58px 1fr 18px;gap:6px;align-items:center;background:var(--panel-2);border-radius:2px;padding:5px 8px;font-size:13px}
+.wkr .r{font-family:var(--font-pixel);font-size:8px}.wkr.ok .r{color:var(--mint)}.wkr.fail .r{color:var(--red)}.wkr.now{outline:2px solid var(--gold);outline-offset:-2px}
+#s-week .box h2{margin-bottom:8px}#s-week .days{margin-top:8px}
 </style>
 </head>
 <body>
@@ -510,7 +516,6 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
 <!-- ===== 오늘의 연료 ===== -->
 <section class="screen" id="s-today" aria-label="오늘의 연료">
   <div class="topbar"><a class="back" href="#home">◀ 마을</a><h1>오늘의 연료</h1><span class="tag" id="todayTag"></span></div>
-  <div class="box" data-acc-title="🧚 요정 루미의 평가"><div id="fairyBox"></div></div>
   <div class="box diary" data-acc-title="📊 날짜별 칼로리">
     <div class="dnav"><button class="back" type="button" id="dPrev" aria-label="전날">◀</button><b id="dLabel"></b><button class="back" type="button" id="dNext" aria-label="다음날">▶</button><button class="btn alt sm" type="button" id="dToday" hidden>오늘</button></div>
     <div class="dsum" id="dSum"></div>
@@ -523,6 +528,7 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
     <h3 class="dh">운동</h3><div class="meal" id="dEx"></div>
     <a class="btn" href="#record" style="text-decoration:none;text-align:center;margin-top:14px;display:block">+ 기록하기</a>
   </div>
+  <div class="box" data-acc-title="🧚 요정 루미의 평가"><div id="fairyBox"></div></div>
 </section>
 
 <!-- ===== 주간 퀘스트 ===== -->
@@ -535,9 +541,9 @@ document.addEventListener("DOMContentLoaded",function(){setTheme(document.docume
   </div>
   <div class="box">
     <h2>지난 기록</h2>
-    <div class="weeks" id="weekHistory"></div>
+    <div class="weeks rows" id="weekHistory"></div>
   </div>
-  <div class="box"><h2>누적 결과</h2><p style="margin:0" id="fineText"></p><p class="muted small" style="margin:8px 0 0" id="weekRule"></p></div>
+  <div class="box"><h2>누적 결과</h2><p style="margin:0" id="fineText"></p><p class="muted small" style="margin:6px 0 0" id="weekRule"></p></div>
 </section>
 
 <!-- ===== 그래프 ===== -->
@@ -800,7 +806,7 @@ function renderWeek(){
   $("weekRule").textContent=`규칙: 월요일 시작, 하루 ${S.quest.minMinutes}분 이상 운동한 날이 주 ${S.quest.days}회 이상이면 달성. 미달성 시 벌금 ${fmt(S.quest.fine)}원. (설정에서 바꿀 수 있어요)`;
   $("weekDays").innerHTML=tw.dates.map(d=>{const e=ex[iso(d)];const cls=e&&e.min>=S.quest.minMinutes?"hit":e?"part":"";
     return`<div class="day ${cls} ${iso(d)===tIso?"today":""}">${DOW[d.getDay()]}<span class="m num">${e?e.min+"'":"-"}</span></div>`}).join("");
-  $("weekHistory").innerHTML=weeks.slice(-12).reverse().map(w=>`<div class="wk ${w.ok?"ok":w.current?"":"fail"} ${w.current?"now":""}">${md(w.start)}~<span class="r">${w.ok?"CLEAR":w.current?"진행중":"FAIL"}</span>${w.hit}/${w.rule.days}회 · ${w.min}분${w.rest?'<br><span class="rest">회복 주간</span>':""}</div>`).join("");
+  $("weekHistory").innerHTML=weeks.slice(-12).reverse().map(w=>`<div class="wkr ${w.ok?"ok":w.current?"":"fail"} ${w.current?"now":""}"><span class="num">${md(w.start)}~</span><span class="r">${w.ok?"CLEAR":w.current?"진행중":"FAIL"}</span><span>${w.hit}/${w.rule.days}회 · ${w.min}분</span><span>${w.rest?"🌙":""}</span></div>`).join("");
   const done=weeks.filter(w=>!w.current),fails=done.filter(w=>!w.ok);
   $("fineText").innerHTML=`지난 ${done.length}주 중 <span class="up">${done.filter(w=>w.ok).length}주 달성</span> · 누적 벌금 <b class="down">${fmt(fails.reduce((a,w)=>a+(w.rule.fine||0),0))}원</b>`+(fails.some(w=>w.rest)?` <span class="muted">(그중 회복 주간 ${fails.filter(w=>w.rest).length}주)</span>`:"");
 }
@@ -1061,12 +1067,15 @@ function renderAdv(rows){
   $("advLog").innerHTML=rows.slice(0,12).map(r=>`<li><span class="ad-d num">${mdw(parse(r.d))}</span><span class="ad-chips">${r.ex?`<span class="chip ${r.exOk?"ok":""}">🏃 ${esc(r.ex)}</span>`:""}${r.kcal!=null?`<span class="chip ${r.kOk?"ok":"bad"}">🍙 ${fmt(r.kcal)}kcal</span>`:""}${r.w!=null?`<span class="chip">⚖️ ${r.w}kg</span>`:""}</span><span class="xp">+${r.xp}</span></li>`).join("")||'<li class="muted">아직 기록이 없어요.</li>';
 }
 
-/* ===== 접고 펴기: 휴대폰에선 한 번에 한 칸만, PC에선 모두 펼쳐 여러 줄로 ===== */
+/* ===== 접고 펴기: 화면마다 방식이 달라요 (multi: 여러 칸 자유롭게 / single: 한 칸씩 / none: 접기 없음) ===== */
 const ACC_WIDE=window.matchMedia?window.matchMedia("(min-width:900px)"):{matches:false,addEventListener(){}};
 function initAccordion(){
-  const SKIP=["s-title","s-setup","s-home","s-record","s-settings"],OPEN={"s-today":1};
+  const SKIP=["s-title","s-setup","s-home","s-record","s-settings"];
+  const MODE={"s-quest":"none","s-week":"none","s-today":"single","s-charts":"single"};
+  const OPEN={"s-calendar":[0,1],"s-stats":[0,1]};
   document.querySelectorAll("section.screen").forEach(sec=>{
-    if(SKIP.includes(sec.id))return;
+    const mode=MODE[sec.id]||"multi";
+    if(SKIP.includes(sec.id)||mode==="none")return;
     const boxes=[...sec.children].filter(el=>el.classList.contains("box")&&!el.classList.contains("fold"));
     if(boxes.length<2)return;
     sec.classList.add("acc");
@@ -1078,10 +1087,11 @@ function initAccordion(){
       const t=document.createElement("span");t.className="acc-t";[...h.childNodes].forEach(n=>t.appendChild(n));h.appendChild(t);
       h.classList.add("acc-h");h.setAttribute("role","button");h.tabIndex=0;
       const sum=document.createElement("span");sum.className="acc-s";h.appendChild(sum);
-      const open=i===(OPEN[sec.id]||0);bx.classList.toggle("open",open);h.setAttribute("aria-expanded",String(open));
+      const open=(OPEN[sec.id]||[0]).includes(i);bx.classList.toggle("open",open);h.setAttribute("aria-expanded",String(open));
       const toggle=()=>{if(ACC_WIDE.matches)return;const willOpen=!bx.classList.contains("open");
-        boxes.forEach(o=>{o.classList.remove("open");o.querySelector(".acc-h").setAttribute("aria-expanded","false")});
-        if(willOpen){bx.classList.add("open");h.setAttribute("aria-expanded","true");setTimeout(()=>bx.scrollIntoView({block:"nearest",behavior:"smooth"}),30)}};
+        if(mode==="single")boxes.forEach(o=>{o.classList.remove("open");o.querySelector(".acc-h").setAttribute("aria-expanded","false")});
+        bx.classList.toggle("open",willOpen);h.setAttribute("aria-expanded",String(willOpen));
+        if(willOpen)setTimeout(()=>bx.scrollIntoView({block:"nearest",behavior:"smooth"}),30)};
       h.addEventListener("click",e=>{if(e.target.closest("button,a,select,input"))return;toggle()});
       h.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle()}});
     })});
