@@ -1092,8 +1092,8 @@ function renderAdv(rows){
 const ACC_WIDE=window.matchMedia?window.matchMedia("(min-width:900px)"):{matches:false,addEventListener(){}};
 function initAccordion(){
   const SKIP=["s-title","s-setup","s-home","s-record","s-settings"];
-  const MODE={"s-week":"none","s-today":"single","s-charts":"single"};
-  const OPEN={"s-calendar":[0,1],"s-stats":[0,1],"s-quest":[0,1,2,3]};
+  const MODE={"s-quest":"none","s-week":"none","s-today":"single","s-charts":"single"};
+  const OPEN={"s-calendar":[0,1],"s-stats":[0,1]};
   document.querySelectorAll("section.screen").forEach(sec=>{
     const mode=MODE[sec.id]||"multi";
     if(SKIP.includes(sec.id)||mode==="none")return;
@@ -1119,19 +1119,22 @@ function initAccordion(){
 }
 function accSum(el,text){const bx=el&&el.closest(".box");if(!bx)return;const s=bx.querySelector(".acc-h .acc-s");if(s)s.textContent=text||""}
 
-/* ===== 설정: 버튼을 눌러 한 칸씩 열기 ===== */
-function initSettingsTiles(){const sec=$("s-settings");if(!sec)return;
+/* ===== 설정·메인 퀘스트: 버튼을 눌러 한 칸씩 열기 ===== */
+function initSettingsTiles(){
+  tileScreen("s-settings",null,-1);
+  tileScreen("s-quest",[["⚔️","보스 전투"],["📜","오늘의 퀘스트"],["🗺️","체중 지도"],["📈","진행도"]],0)}
+function tileScreen(id,labels,openIdx){const sec=$(id);if(!sec)return;
   const ICON={"화면 테마":"🎨","주간 운동 퀘스트":"⚔️","저장·동기화":"☁️","타이틀":"🏠","캐릭터·목표":"🧍","백업":"💾","처음부터 다시":"🗑️"};
   const boxes=[...sec.children].filter(el=>el.classList.contains("box"));
-  const nav=document.createElement("nav");nav.className="set-menu";nav.setAttribute("aria-label","설정 항목");
-  boxes.forEach((bx,i)=>{const h=bx.querySelector("h2");const name=h?h.textContent.trim():"설정";bx.hidden=true;bx.id=bx.id||"setbox"+i;
-    const b=document.createElement("button");b.type="button";b.setAttribute("aria-expanded","false");b.setAttribute("aria-controls",bx.id);
-    b.innerHTML=`<span class="i">${ICON[name]||"⚙️"}</span>${esc(name)}`;
-    b.addEventListener("click",()=>{const open=bx.hidden;boxes.forEach(o=>o.hidden=true);nav.querySelectorAll("button").forEach(x=>x.setAttribute("aria-expanded","false"));
-      hint.hidden=open;if(open){bx.hidden=false;b.setAttribute("aria-expanded","true")}});
-    nav.appendChild(b)});
-  const hint=document.createElement("p");hint.className="small muted set-hint";hint.textContent="바꾸고 싶은 항목을 눌러 주세요.";
-  sec.querySelector(".topbar").after(nav,hint)}
+  const nav=document.createElement("nav");nav.className="set-menu";nav.setAttribute("aria-label","항목");
+  const hint=document.createElement("p");hint.className="small muted set-hint";hint.textContent="보고 싶은 항목을 눌러 주세요.";
+  const btns=boxes.map((bx,i)=>{const h=bx.querySelector("h2");const name=labels&&labels[i]?labels[i][1]:(h?h.textContent.trim():"항목");const ic=labels&&labels[i]?labels[i][0]:(ICON[name]||"⚙️");
+    bx.id=bx.id||id+"-box"+i;
+    const b=document.createElement("button");b.type="button";b.setAttribute("aria-controls",bx.id);b.innerHTML=`<span class="i">${ic}</span>${esc(name)}`;
+    b.addEventListener("click",()=>show(bx.hidden?i:-1));nav.appendChild(b);return b});
+  function show(k){boxes.forEach((o,i)=>{o.hidden=i!==k;btns[i].setAttribute("aria-expanded",String(i===k))});hint.hidden=k>=0;
+    if(k>=0&&id==="s-quest")document.querySelectorAll("canvas[data-boss]").forEach(c=>drawBoss(c,c.dataset.boss,c.dataset.state))}
+  sec.querySelector(".topbar").after(nav,hint);show(openIdx)}
 
 /* ===== 일일 퀘스트 · 골드 · 보스 전투 ===== */
 const DQ=[["diet","🍙","식단 목표 지키기",30,10],["ex","🏃","운동 퀘스트 시간 채우기",40,15],["na","🧂","나트륨 기준 지키기",10,3],["w","⚖️","체중·인바디 기록",20,5]];
