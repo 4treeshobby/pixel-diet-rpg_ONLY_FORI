@@ -343,6 +343,19 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .shop-item.on{outline:2px solid var(--mint);outline-offset:-2px}.shop-item.pv{outline:2px dashed var(--gold);outline-offset:-2px}
 .shop-pick{all:unset;cursor:pointer;display:grid;gap:2px;justify-items:center;font-size:13px}.shop-pick .i{font-size:26px}
 .shop-pick:focus-visible{outline:2px solid var(--gold)}
+
+/* 체중 지도 */
+#map.world{position:relative;display:block;margin-top:4px;border:3px solid #0f0e1f;border-radius:4px;overflow:hidden;
+  background-color:#8fd46f;background-image:linear-gradient(45deg,#84cb63 25%,transparent 25%,transparent 75%,#84cb63 75%),linear-gradient(45deg,#84cb63 25%,transparent 25%,transparent 75%,#84cb63 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+#map.world svg{position:absolute;inset:0;width:100%;height:100%}
+#map.world .node{position:absolute;transform:translate(-50%,-50%);width:84px;gap:2px;z-index:1}
+#map.world .node canvas{width:40px;max-width:40px;background:#fff8;border:2px solid #0f0e1f;border-radius:2px;padding:2px}
+#map.world .node.done canvas{opacity:.55;background:#c8f5dd}
+#map.world .node.now canvas{background:#ffe9a8;outline:2px solid #ff4d6d;animation:pop .6s steps(2) infinite alternate}
+#map.world .node .kg{background:#1c1a33;color:#fff;padding:1px 4px;border-radius:2px;font-size:7px}
+#map.world .node.done .kg{background:#2fb487}#map.world .node.now .kg{background:#ff4d6d}
+#map.world .node .nm{font-size:10px;color:#1c1a33;background:#fffd;padding:0 3px;border-radius:2px;line-height:1.35}
+#map.world .me{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;background:#ff4d6d;color:#fff;padding:1px 4px;border-radius:2px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -784,7 +797,7 @@ function compute(D){
 /* ---------- render ---------- */
 function rebuild(){
   M=compute(merged());
-  renderHome();renderStats();splitStats();renderQuest();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());GAME=renderGame({key:"fori",T:M.T,days:M.days,ex:M.ex,wDates:new Set(M.ib.map(x=>iso(x.d))),kOk:k=>k<=M.tol,naGoal:M.S.naGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,weeks:M.weeks});EQUIP=M.D.equip;{const left=renderShop({earned:GAME.gold,own:M.D.own,equip:M.D.equip});$("hGold").textContent="💰 "+fmt(left)+"G"}renderQuestRules();
+  renderHome();renderStats();splitStats();renderQuest();worldMap();renderToday();renderWeek();renderBadges();renderJournal();renderCloset();renderEntries();renderFoods();renderCalendar(calInfo());renderFairy(fairyX());GAME=renderGame({key:"fori",T:M.T,days:M.days,ex:M.ex,wDates:new Set(M.ib.map(x=>iso(x.d))),kOk:k=>k<=M.tol,naGoal:M.S.naGoal,minFor:ds=>M.ruleFor(iso(monday(parse(ds)))).minMinutes,weeks:M.weeks});EQUIP=M.D.equip;{const left=renderShop({earned:GAME.gold,own:M.D.own,equip:M.D.equip});$("hGold").textContent="💰 "+fmt(left)+"G"}renderQuestRules();
   weightChart(M.ib,M.S);kcalChart(M.days,M.T,M.S);exChart(M.weeks.slice(-8),M.S);
   drawAll();
   if(lastLevel!==null&&M.L>lastLevel){$("lvUpText").textContent="LV."+M.L+" "+M.title+"(이)가 되었어요!";$("lvUp").classList.add("on");$("lvUpOk").focus()}
@@ -1225,6 +1238,29 @@ function initShop(get,act){
     if(b.dataset.eq){const it=SHOP_BY[b.dataset.eq];const eq=Object.assign({},s.equip);if(eq[it.slot]===it.id)delete eq[it.slot];else eq[it.slot]=it.id;await act.equip(eq)}})}
 
 let GAME=null;
+/* ===== 체중 지도: 구불구불한 길 위에 마을과 보스 ===== */
+function worldMap(){const m=$("map");if(!m)return;const nodes=[...m.querySelectorAll(":scope>.node")];if(!nodes.length)return;
+  m.classList.add("world");m.style.gridTemplateColumns="";
+  const n=nodes.length,cols=Math.min(4,n),rows=Math.ceil(n/cols),RH=118,H=rows*RH+20,VW=400;
+  const pts=nodes.map((_,i)=>{const r=Math.floor(i/cols);let c=i%cols;if(r%2)c=cols-1-c;return{x:(c+0.5)/cols*VW,y:r*RH+52}});
+  const seg=(a,b)=>a.y===b.y?` L${b.x} ${b.y}`:` C${a.x+(a.x>VW/2?70:-70)} ${a.y} ${b.x+(b.x>VW/2?70:-70)} ${b.y} ${b.x} ${b.y}`;
+  let d=`M${pts[0].x} ${pts[0].y}`;pts.slice(1).forEach((p,i)=>d+=seg(pts[i],p));
+  const now=nodes.findIndex(x=>x.classList.contains("now"));const reach=now<0?n-1:now;
+  let dp=`M${pts[0].x} ${pts[0].y}`;pts.slice(1,reach+1).forEach((p,i)=>dp+=seg(pts[i],p));
+  // 장식: 나무·연못·바위 (고정 위치)
+  let deco="";const rnd=s=>{let t=Math.sin(s*999)*10000;return t-Math.floor(t)};
+  for(let k=0;k<rows*16;k++){const x=rnd(k+1)*VW,y=rnd(k+7)*H;if(pts.some(p=>Math.abs(p.x-x)<44&&Math.abs(p.y-y)<44))continue;
+    const t=k%5;deco+=t===0?`<rect x="${x-14}" y="${y-6}" width="28" height="12" rx="2" fill="#6fc3e8"/><rect x="${x-10}" y="${y-3}" width="8" height="2" fill="#bfe6ff"/>`
+      :t===1?`<rect x="${x-5}" y="${y-3}" width="10" height="6" fill="#9a9aa8"/><rect x="${x-3}" y="${y-5}" width="6" height="2" fill="#b8b8c4"/>`
+      :`<rect x="${x-1}" y="${y+4}" width="3" height="5" fill="#8a5a34"/><rect x="${x-6}" y="${y-2}" width="13" height="7" fill="#3e9a55"/><rect x="${x-4}" y="${y-7}" width="9" height="5" fill="#4fb867"/><rect x="${x-2}" y="${y-10}" width="5" height="3" fill="#62c97a"/>`}
+  const svg=`<svg viewBox="0 0 ${VW} ${H}" preserveAspectRatio="none" aria-hidden="true">${deco}
+    <path d="${d}" fill="none" stroke="#5b3d22" stroke-width="22" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#d9b07a" stroke-width="16" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="#f3dcb2" stroke-width="2" stroke-dasharray="6 8"/>
+    <path d="${dp}" fill="none" stroke="#ff86bd" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 6"/></svg>`;
+  m.style.height=H+"px";m.innerHTML=svg;
+  nodes.forEach((nd,i)=>{nd.style.left=(pts[i].x/VW*100)+"%";nd.style.top=pts[i].y+"px";if(i===now)nd.insertAdjacentHTML("afterbegin",'<span class="me">▼ 나</span>');m.appendChild(nd)});
+  m.querySelectorAll("canvas[data-boss]").forEach(c=>drawBoss(c,c.dataset.boss,c.dataset.state))}
+
 function toastUndo(t,fn){const el=$("toast");el.innerHTML="";el.append(t);const b=document.createElement("button");b.type="button";b.className="undo";b.textContent="되돌리기";
   b.onclick=()=>{clearTimeout(toast._t);el.classList.remove("on");fn()};el.append(b);el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),6000)}
 function entPickState(){const all=[...document.querySelectorAll("#entries .pick")],on=all.filter(c=>c.checked);
