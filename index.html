@@ -1359,7 +1359,7 @@ if(!reduced)setInterval(()=>{frame^=1;drawAll()},420);
 
 /* ================= pixel art ================= */
 /* 체형 5단계 (BMI, 대한비만학회 기준 18.5/23/25 + 17 미만 매우 마름) */
-const BMI_STD=b=>b<18.5?"저체중":b<23?"정상":b<25?"과체중(비만 전단계)":b<30?"비만 1단계":b<35?"비만 2단계":"고도비만";
+function BMI_STD(b){return b<18.5?"저체중":b<23?"정상":b<25?"과체중(비만 전단계)":b<30?"비만 1단계":b<35?"비만 2단계":"고도비만"}
 function bodyOf(bmi){const T=[[17,"매우 마름",10],[18.5,"약간 마름",12],[23,"보통",14],[25,"통통",18],[Infinity,"뚱뚱",22]];let i=T.findIndex(t=>bmi<t[0]);if(i<0)i=2;return{i,max:T[i][0],label:T[i][1],w:T[i][2]}}
 function bodyScale(bmi){const t=bodyOf(bmi);return ["매우 마름","약간 마름","보통","통통","뚱뚱"].map(l=>({label:l})).map((b,i)=>i===t.i?`<b style="color:var(--gold)">[${b.label}]</b>`:`<span class="muted">${b.label}</span>`).join(" · ")};
 function drawHero(ctx,kind,f,bmi,crown){
