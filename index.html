@@ -978,6 +978,20 @@ function drawFairy(c,f){const x=c.getContext("2d");x.clearRect(0,0,16,16);const 
   P(6,6+dy,4,5,"#ff86bd");P(5,9+dy,6,2,"#ff86bd");P(6,11+dy,1,2,"#ffe0c7");P(9,11+dy,1,2,"#ffe0c7");
   // 지팡이 별
   P(12,7+dy,1,5,"#c9a26b");P(11,5+dy,3,1,"#ffd166");P(12,4+dy,1,3,"#ffd166");if(f)P(14,3,1,1,"#fff");else P(10,3,1,1,"#fff")}
+function fairyMacro(items){let c=0,p=0,f=0,s=0,known=0,all=0;
+  items.forEach(i=>{const k=i.kcal||0;all+=k;const m=typeof macroOf==="function"&&i.name?macroOf(i.name,k):null;if(m){c+=m.c;p+=m.p;f+=m.f;s+=m.s;known+=k}});
+  const mk=c*4+p*4+f*9;if(!mk)return null;
+  return{c,p,f,s,all,cov:all?known/all:0,mk,pc:c*4/mk*100,pp:p*4/mk*100,pf:f*9/mk*100}}
+const MACRO_T={c:40,p:30,f:30};
+const MACRO_FIX={c:"현미밥·고구마·오트밀",p:"닭가슴살·두부·달걀·그릭요거트",f:"견과류·올리브유·아보카도"};
+const MACRO_NM={c:"탄수화물",p:"단백질",f:"지방"};
+function macroTalk(M,label,days){days=days||1;const d={c:M.pc-MACRO_T.c,p:M.pp-MACRO_T.p,f:M.pf-MACRO_T.f};
+  const worst=Object.keys(d).sort((a,b)=>Math.abs(d[b])-Math.abs(d[a]))[0],dv=d[worst],ad=Math.abs(dv);
+  const ratio=`탄${Math.round(M.pc)}:단${Math.round(M.pp)}:지${Math.round(M.pf)}`;
+  if(ad<=5)return{lv:"good",t:`${label} 탄단지 ${ratio} — 목표 4:3:3에 거의 딱 맞아요!`};
+  const per=worst==="f"?9:4,g=Math.round(ad/100*M.mk/per/days);
+  const fix=dv<0?`${MACRO_NM[worst]}이 ${Math.round(ad)}%p 부족해요. ${MACRO_FIX[worst]}로 ${MACRO_NM[worst]} ${days>1?"하루 ":""}약 ${g}g을 채우면 맞아요.`:`${MACRO_NM[worst]}이 ${Math.round(ad)}%p 많아요. ${days>1?"하루 ":""}약 ${g}g(${Math.round(g*per)}kcal) 줄이면 맞아요.`;
+  return{lv:ad>10?"yel":"info",t:`${label} 탄단지 ${ratio} (목표 4:3:3). ${fix}`}}
 function fairyAdvice(X){
   // X: {T, now, goal, na, mode:"max"|"min"|"near", kOk(k), days:{iso:{kcal,na,items:[{meal,kcal}],pending}}, weights:[{d,w}], week:{hit,days}, dir}
   const out=[],add=(lv,t)=>out.push({lv,t});const g=X.goal,f=n=>Math.round(n).toLocaleString("ko-KR");
@@ -1003,6 +1017,17 @@ function fairyAdvice(X){
     let all=0,snack=0;past.forEach(d=>X.days[d].items.forEach(i=>{all+=i.kcal||0;if(i.meal==="간식")snack+=i.kcal||0}));
     if(all&&snack/all>0.3)add("yel",`최근 칼로리의 ${Math.round(snack/all*100)}%가 간식이에요. 간식을 끼니로 옮기면 배가 더 든든해요.`);
   }
+  // 탄단지 4:3:3 · 당류 · 끼니
+  let macro=null;
+  if(td&&tk>=g*0.3){const M=fairyMacro(td.items);if(M){macro=M;const r=macroTalk(M,"오늘");add(r.lv,r.t);
+      if(M.cov<0.7)add("info",`오늘 칼로리 중 ${Math.round((1-M.cov)*100)}%는 성분 정보가 없는 음식이라 비율이 정확하지 않을 수 있어요.`);
+      if(M.s>50)add("yel",`오늘 당류 ${Math.round(M.s)}g — 하루 권장(50g 이하)을 넘었어요. 음료·과자부터 줄여 봐요.`);else if(M.s>25)add("info",`오늘 당류 ${Math.round(M.s)}g. 25g 아래면 더 좋아요.`)}
+    const top=td.items.slice().sort((a,b)=>(b.kcal||0)-(a.kcal||0))[0];if(top&&top.name&&tk)add("info",`오늘 칼로리 1위는 ${top.name} (${f(top.kcal)}kcal, ${Math.round(top.kcal/tk*100)}%)`);
+    const byMeal={};td.items.forEach(i=>byMeal[i.meal]=(byMeal[i.meal]||0)+(i.kcal||0));const bm=Object.entries(byMeal).sort((a,b)=>b[1]-a[1])[0];
+    if(bm&&tk>=g*0.7&&bm[1]/tk>0.55)add("info",`오늘 칼로리의 ${Math.round(bm[1]/tk*100)}%가 ${bm[0]}에 몰렸어요. 끼니를 고르게 나누면 덜 배고파요.`)}
+  if(past.length>=3){const its=[];past.forEach(d=>its.push(...X.days[d].items));const M=fairyMacro(its);
+    if(M&&M.cov>=0.6){const r=macroTalk(M,`최근 ${past.length}일 평균`,past.length);add(r.lv==="yel"&&(!macro)?"yel":r.lv==="yel"?"info":r.lv,r.t);if(!macro)macro=M;
+      const sd=M.s/past.length;if(sd>50)add("yel",`최근 하루 평균 당류 ${Math.round(sd)}g으로 많아요.`)}}
   if(td&&td.na>X.na*1.5)add("yel",`오늘 나트륨 ${f(td.na)}mg로 많아요. 물을 충분히 마셔요!`);
   const logged=Object.keys(X.days).filter(d=>d<=tIso).sort();const lastLog=logged[logged.length-1];
   if(!lastLog)add("yel","아직 식단 기록이 없어요. 한 끼부터 적어 볼까요?");
@@ -1027,16 +1052,15 @@ function fairyAdvice(X){
   const score=100-25*red-10*yel;const grade=score>=95?"S":score>=80?"A":score>=60?"B":"C";
   if(!red&&!yel&&!out.some(o=>o.lv==="good"))add("good","오늘도 잘하고 있어요. 이대로만 가요!");
   const ORD={red:0,yel:1,info:2,good:3};out.sort((a,b)=>ORD[a.lv]-ORD[b.lv]);
-  return{grade,msgs:out}}
+  return{grade,msgs:out,macro}}
 function renderFairy(X){const r=fairyAdvice(X);const ico={red:"🔴",yel:"🟡",info:"🔵",good:"🟢"};
   const top=r.msgs[0];const say={S:"완벽해요!",A:"잘하고 있어요!",B:"조금만 신경 써요!",C:"요정이 걱정하고 있어요…"}[r.grade];
   if($("fairyLine"))$("fairyLine").innerHTML=`<b class="fairy-grade g${r.grade}">${r.grade}</b><span>${top?esc(top.t):say}</span>`;
   if($("fairyBox"))$("fairyBox").innerHTML=`<div class="fairy-head"><canvas width="16" height="16" class="fairy-cv" aria-hidden="true"></canvas><div><b>${say}</b><br><span class="small muted">최근 7일 식단·운동 기준</span></div><b class="fairy-grade big g${r.grade}">${r.grade}</b></div>
-    <ul class="fairy-list">${r.msgs.map(m=>`<li class="${m.lv}"><span>${ico[m.lv]}</span><span>${esc(m.t)}</span></li>`).join("")}</ul>`;
+    ${r.macro?`<div style="margin:8px 0 2px"><div class="small muted" style="display:flex;justify-content:space-between"><span>탄단지 비율 (목표 4:3:3)</span><span>탄${Math.round(r.macro.pc)} · 단${Math.round(r.macro.pp)} · 지${Math.round(r.macro.pf)}</span></div><div style="display:flex;height:10px;border:2px solid currentColor;margin-top:3px"><i style="width:${r.macro.pc}%;background:#f4b860"></i><i style="width:${r.macro.pp}%;background:#e8607a"></i><i style="width:${r.macro.pf}%;background:#5fa8e8"></i></div><div style="display:flex;height:4px;margin-top:2px;opacity:.5"><i style="width:40%;background:#f4b860"></i><i style="width:30%;background:#e8607a"></i><i style="width:30%;background:#5fa8e8"></i></div></div>`:""}<ul class="fairy-list">${r.msgs.map(m=>`<li class="${m.lv}"><span>${ico[m.lv]}</span><span>${esc(m.t)}</span></li>`).join("")}</ul>`;
   accSum($("fairyBox"),`${r.grade}등급 · 조언 ${r.msgs.filter(m=>m.lv!=="good").length}개`);
   document.querySelectorAll(".fairy-cv").forEach(c=>drawFairy(c,0))}
-
-function fairyX(){const S=M.S;const days={};Object.entries(M.days).forEach(([d,v])=>days[d]={kcal:v.kcal,na:v.na,pending:v.pending>0,items:v.items.map(i=>({meal:i.meal,kcal:i.k}))});
+function fairyX(){const S=M.S;const days={};Object.entries(M.days).forEach(([d,v])=>days[d]={kcal:v.kcal,na:v.na,pending:v.pending>0,items:v.items.map(i=>({meal:i.meal,name:i.name,kcal:i.k}))});
   const tw=M.weeks.find(w=>w.current);
   return{T:M.T,now:new Date(),goal:S.kcalGoal,na:S.naGoal,mode:"max",kOk:k=>k<=M.tol,days,weights:M.ib.map(x=>({d:x.d,w:x.w})),week:{hit:tw?tw.hit:0,days:S.quest.days},dir:-1}}
 /* ===== 운동 소모 칼로리 DB (MET) ===== */
