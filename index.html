@@ -1470,7 +1470,7 @@ const QUICK=(function(){
     return score>=0.55?{key:best,score}:null}
   function qtyOf(txt){
     // "3분의 2", "1/2", "반", 숫자+단위, 한글수+단위
-    let m=txt.match(/(\d+)\s*분의\s*(\d+)/);if(m)return{q:+m[2]/+m[1],u:null,raw:m[0]};
+    let m=txt.match(new RegExp("(\\d+)\\s*분의\\s*(\\d+)\\s*"+UNIT_RE+"?"));if(m)return{q:+m[2]/+m[1],u:m[3]||null,raw:m[0]};
     m=txt.match(new RegExp("(\\d+(?:\\.\\d+)?)\\s*/\\s*(\\d+)\\s*"+UNIT_RE+"?"));if(m)return{q:+m[1]/+m[2],u:m[3]||null,raw:m[0]};
     m=txt.match(new RegExp("(\\d+(?:\\.\\d+)?)\\s*"+UNIT_RE));if(m)return{q:+m[1],u:m[2],raw:m[0]};
     m=txt.match(new RegExp("(한|하나|두|둘|세|셋|네|넷|다섯|여섯|일곱|여덟|아홉|열)\\s*"+UNIT_RE));if(m)return{q:KNUM[m[1]],u:m[2],raw:m[0]};
@@ -1480,6 +1480,7 @@ const QUICK=(function(){
   function convert(q,u,f){ // → 음식 목록 단위 기준 수량
     if(UNIT_ALIAS[u])u=UNIT_ALIAS[u];if(u==="kg"){q*=1000;u="g"}if(u==="L"){q*=1000;u="ml"}
     if(u==="컵"&&f.unit!=="컵"&&(f.unit==="g"||f.unit==="ml"||f.g)){q*=200;u="ml"}
+    if(u==="판"&&f.unit==="조각")return{q:q*8,ok:true,note:"1판=8조각으로 환산"};
     if(!u||u===f.unit)return{q,ok:true};
     if(u==="g"||u==="ml"){if(f.unit==="g"||f.unit==="ml")return{q,ok:true};if(f.g)return{q:q/f.g,ok:true,note:`1${f.unit}=${f.g}g으로 환산`};return{q:1,ok:false,note:`${f.unit} 단위로 고쳐 주세요`}}
     if(SPOON[u]&&SPOON[f.unit])return{q:q*SPOON[u]/SPOON[f.unit],ok:true,note:"숟가락 단위 환산"};
